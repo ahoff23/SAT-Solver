@@ -1,4 +1,7 @@
-#include "C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\primitives\include\sat_api.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "sat_api.h"
 
 /******************************************************************************
 * We explain here the functions you need to implement
@@ -66,10 +69,10 @@ BOOLEAN sat_irrelevant_var(const Var* var) {
 //@param clause_indices: A list of indices of clauses to check
 //@param sat_state: The sat state to check against
 //@return 1 if all are subsumed, 0 otherwise
-BOOLEAN check_list_subsumed(struct clauseNode *clauses)
+BOOLEAN check_list_subsumed(clauseNode *clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode *curr = clauses;
+	clauseNode *curr = clauses;
 
 	//Loop through every clause containing the literal
 	if (curr != NULL)
@@ -97,7 +100,7 @@ c2dSize sat_var_count(const SatState* sat_state) {
 c2dSize sat_var_occurences(const Var* var) {
 	if (var != NULL)
 		return var->num_mentioned;
-	return NULL;
+	return 0;
 }
 
 //returns the index^th clause that mentions a variable
@@ -105,7 +108,7 @@ c2dSize sat_var_occurences(const Var* var) {
 //this cannot be called on a variable that is not mentioned by any clause
 Clause* sat_clause_of_var(c2dSize index, const Var* var) {
 	//Create a node to traverse the list
-	struct clauseNode *curr = var->clauses;
+	clauseNode *curr = var->clauses;
 
 	//Make sure the index is legal
 	if (index < 0 || index >= var->num_mentioned || curr == NULL)
@@ -166,19 +169,18 @@ Lit* opp_lit(const Lit* lit)
 {
 	if (lit == NULL)
 		return NULL;
-	else if (lit == lit->var->pos_lit)
+	else if (lit->index > 0)
 		return lit->var->neg_lit;
 	else
-	return lit->var->pos_lit;
+		return lit->var->pos_lit;
 }
 
 //returns 1 if the literal is implied, 0 otherwise
 //a literal is implied by deciding its variable, or by inference using unit resolution
 //returns -1 if lit is NULL
 BOOLEAN sat_implied_literal(const Lit* lit) {
-	//Return the truth value of the literal
 	if (lit != NULL)
-		return lit->truth_value;
+		return lit->implied;
 	return -1; //the literal does not exist
 }
 
@@ -199,13 +201,13 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	var->decision_level = sat_state->decision_level;
 
 	//Set the literal's and its opposite literal's truth value
-	lit->truth_value = 1;
-	opp_lit(lit)->truth_value = 0;
+	lit->implied = 1;
+	//opp_lit(lit)->implied = 0; Don't need
 
 	//Add literal to list of decisions
 	Decision* new_dec = (Decision*)malloc(sizeof(Decision*));
 	new_dec->dec_lit = lit;
-	decList_push(&(sat_state->decisions),new_dec);
+	decList_push(sat_state->decisions,new_dec);
 
 	//Update all clauses containing the literal
 	subsume_clauses(lit, lit->clauses);
@@ -223,10 +225,10 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 //Subsume all clauses containing a literal
 //@param lit: the literal causing the subsumption
 //@param clauses: the list of clauses being subsumed
-void subsume_clauses(Lit* lit, struct ClauseNode* clauses)
+void subsume_clauses(Lit* lit, clauseNode* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr != NULL)
@@ -245,10 +247,10 @@ void subsume_clauses(Lit* lit, struct ClauseNode* clauses)
 //Remove literal (performed when the opposite literal is decided or asserted by unit resolution)
 //@param clauses: the clauses which are being updated
 //@return contradiction clause if found, otherwise return NULL
-Clause* add_opposite(struct clauseNode* clauses)
+Clause* add_opposite(clauseNode* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr == NULL)
@@ -276,7 +278,7 @@ Clause* add_opposite(struct clauseNode* clauses)
 //to L-1 before the call ends
 void sat_undo_decide_literal(SatState* sat_state) {
 	//Get the literal decided on at the current decision level
-	Decision* dec = decList_pop(&(sat_state->decisions));
+	Decision* dec = decList_pop(sat_state->decisions);
 
 	//Set variable to uninstantiated
 	Var* var = sat_literal_var(dec->dec_lit);
@@ -286,8 +288,8 @@ void sat_undo_decide_literal(SatState* sat_state) {
 	var->decision_level = -1;
 
 	//Set the literal's and its opposite literal's truth value
-	dec->dec_lit->truth_value = 1;
-	opp_lit(dec->dec_lit)->truth_value = 0;
+	dec->dec_lit->implied = 0;
+	opp_lit(dec->dec_lit)->implied = 0;
 
 	//Reverse all clauses containing the literal
 	undo_subsume_clauses(dec->dec_lit, dec->dec_lit->clauses);
@@ -296,7 +298,7 @@ void sat_undo_decide_literal(SatState* sat_state) {
 	undo_add_opposite(dec->dec_lit->clauses);
 	
 	//Undo unit resolution
-	undo_unit_resolution(sat_state);
+	sat_undo_unit_resolution(sat_state);
 
 	//Decrement the decision level
 	sat_state->decision_level--;
@@ -305,10 +307,10 @@ void sat_undo_decide_literal(SatState* sat_state) {
 //Undo any subsumptions that occurred due to a decision or unit resolution
 //@param lit: the literal on which the clause was subsumed
 //@param clauses: the list of clauses containing lit
-void undo_subsume_clauses(Lit* lit, struct clauseNode* clauses)
+void undo_subsume_clauses(Lit* lit, clauseNode* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr == NULL)
@@ -329,10 +331,10 @@ void undo_subsume_clauses(Lit* lit, struct clauseNode* clauses)
 
 //Undo remove literal (performed when the opposite literal is decided or asserted by unit resolution)
 //@param clauses: the clauses which are being updated
-void undo_add_opposite(struct clauseNode* clauses)
+void undo_add_opposite(clauseNode* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr == NULL)
@@ -374,18 +376,14 @@ c2dSize sat_clause_index(const Clause* clause) {
 
 //returns the literals of a clause
 Lit** sat_clause_literals(const Clause* clause) {
-
-	// ... TO DO ...
 	if (clause != NULL)
-		return clause->lits;
+		return clause->literals;
 
-	return NULL; //dummy valued
+	return NULL;
 }
 
 //returns the number of literals in a clause
 c2dSize sat_clause_size(const Clause* clause) {
-
-	// ... TO DO ...
 	if (clause != NULL)
 		return clause->num_lits;
 
@@ -394,18 +392,13 @@ c2dSize sat_clause_size(const Clause* clause) {
 
 //returns 1 if the clause is subsumed, 0 otherwise
 BOOLEAN sat_subsumed_clause(const Clause* clause) {
-
-	// ... TO DO ...
 	if (clause != NULL)
 		return clause->subsumed;
-
 	return -1; //dummy valued
 }
 
 //returns the number of clauses in the cnf of sat state
 c2dSize sat_clause_count(const SatState* sat_state) {
-
-	// ... TO DO ...
 	if (sat_state != NULL)
 		return sat_state->num_clauses;
 
@@ -477,18 +470,184 @@ Clause* sat_assert_clause(Clause* clause, SatState* sat_state) {
 
 //constructs a SatState from an input cnf file
 SatState* sat_state_new(const char* file_name) {
+	// Open file for reading
+	FILE* file = fopen(file_name, "r");
+	if(file == NULL) {
+		fprintf(stderr, "Could not open file %s\n", file_name);
+  		exit(1);
+	}
+	
+	c2dSize num_vars = 0, num_clauses = 0;
+	int maxLength = 500;
+	char line[maxLength];
+	
+	// Capture problem line info (i.e. number of variables and clauses)
+	while(fgets(line, maxLength, file) != NULL) {
+		// Skip comment lines
+		if(line[0] == 'c' || line[0] == '%' || line[0] == '0')
+			continue;
+		// check for problem statement line
+		char* token;
+		if(line[0] == 'p') {
+			token = strtok(line, " \n"); // token == 'p'
+			token = strtok(NULL, " \n"); // token == 'cnf'
+			
+			token = strtok(NULL, " \n"); // token == <number of variables>
+			num_vars = strtoul(token, NULL, 10);
+			
+			token = strtok(NULL, " \n"); // token == <number of clauses>
+			num_clauses = strtoul(token, NULL, 10);
+			break;
+		}
+	}
+	
+	// Create SatState, add basic values
+	SatState* satState = (SatState*) malloc(sizeof(SatState));
+	satState->num_vars = num_vars;
+	satState->num_clauses = num_clauses;
+	satState->num_lits = 2*num_vars;
+	satState->decision_level = 0;
+	satState->num_learned = 0;
+	
+	/************************************************************/
+	/****************SETUP VARS AND LITS *********************/
+	/***********************************************************/
+	
+	satState->vars = (Var**) malloc((num_vars+1) * sizeof(Var*));
+	satState->lits = (Lit**) malloc( ((2*num_vars)+1) * sizeof(Lit*));
+	
+	// This step set the start of the literals array in the middle, so we can index in + and - direction
+	satState->lits = satState->lits + num_vars;
+	
+	satState->vars[0] = NULL;
+	satState->lits[0] = NULL;
+	
+	for(c2dLiteral i = 1; i <= num_vars; i++) {
+		// Create variable and literal structs
+		Var* var = (Var*) malloc(sizeof(Var));
+		Lit* litp = (Lit*) malloc(sizeof(Lit));
+		Lit* litn = (Lit*) malloc(sizeof(Lit));
+		
+		// Initialize Variable
+		var->index = i;
+		
+		var->instantiated = 0;
+		var->pos_lit = litp;
+		var->neg_lit = litn;
+		satState->vars[i] = var; // add to satState
+		
+		// Initialize positive literal
+		litp->index = i;
+		litp->implied = 0;
+		litp->var = var;
+		satState->lits[i] = litp; // add to satState
+		
+		// Initialize negative literal
+		litn->index = i * -1;
+		litn->implied = 0;
+		litn->var = var;
+		satState->lits[i * -1] = litn; // add to satState
+	}
+	
+	
+	/************************************************************/
+	/********************SETUP CLAUSES ***********************/
+	/***********************************************************/
+	
+	// Malloc space for clauses
+	Clause* clauses = (Clause*) malloc((num_clauses+1) * sizeof(Clause)); // 1 indexed array
+	
+	// Setup each clause (index starting at 1)
+	for(c2dSize i = 1; i <= num_clauses; i++) {
+		// Read in line if it is not a comment
+		do {
+			if(fgets(line, maxLength, file) == NULL) {
+				fprintf(stderr, "Read error, or EOF reached before all %ld CNF's read.\n", num_clauses);
+  				exit(1);
+  			}
+		} while(line[0] == 'c' || line[0] == '%' || line[0] == '0');
+		// line now contains our clause string
+		// Count number of literals in clause, so we can allocate the array to the appropriate size
+		int num_lits = 0, j = 0;
+		char* temp = line;
+		while(temp[j] != '\0') {
+			if(temp[j] == ' ') { // If we reach a space, increment num_lits
+				num_lits++;
+				while(temp[j+1] == ' ') // go through all consecutive spaces, 
+					j++;
+			}
+			j++;
+		}
+		
+		// Create literal array for this clause, of size num_lits
+		clauses[i].literals = (Lit**) malloc(num_lits * sizeof(Lit *));
 
-	// ... TO DO ...
-
-	return NULL; //dummy valued
+		// Add first literal to clause
+		char* lit_string = strtok(line, " \n"); // Get literal from line
+		c2dLiteral lit_index = strtol(lit_string, NULL, 10);	// convert from string to signed long
+		clauses[i].literals[0] = satState->lits[lit_index];
+		
+		// Add rest of literals to clause
+		for(int j = 1; j < num_lits; j++) {
+			lit_string = strtok(NULL, " \n"); // Get literal from line
+			lit_index = strtol(lit_string, NULL, 10); // convert from string to signed long
+			clauses[i].literals[j] = satState->lits[lit_index];
+		}
+		
+		// Set the other values for this Clause struct
+		clauses[i].subsumed = 0;
+		clauses[i].free_lits = num_lits;
+		clauses[i].subsumed_on = NULL;
+		clauses[i].index = i;
+		clauses[i].num_lits = num_lits;
+		clauses[i].dec_level = -1;
+	}
+	
+	satState->CNF = clauses;
+	
+	/***** TEST SETUP CODE *************
+	SatState* s = satState;
+	printf("num_lits=%ld num_vars=%lu num_clauses=%lu\n", s->num_lits, s->num_vars, s->num_clauses);
+	for(int i = 1; i <= s->num_vars; i++) {
+		Var* var = s->vars[i];
+		printf("var %lu instantiated %d\n", var->index, var->instantiated);
+		printf("negLit %ld posLit %ld \n\n", var->neg_lit->index, var->pos_lit->index);
+	}
+	for(int i = 1; i <= s->num_clauses; i++) {
+		Clause clause = s->CNF[i];
+		for(int j = 0; j < clause.num_lits-1; j++) {
+			printf("%ld ", clause.literals[j]->index);
+		}
+		printf("%ld\n", clause.literals[clause.num_lits-1]->index);
+	}
+	
+	*************************************/
+	return satState;
 }
 
 //frees the SatState
 void sat_state_free(SatState* sat_state) {
-
-	// ... TO DO ...
-
-	return; //dummy valued
+	// Free each Var and Lit struct
+	for(c2dLiteral i = 1; i <= sat_state->num_vars; i++) {
+		free(sat_state->vars[i]);
+		free(sat_state->lits[i]);
+		free(sat_state->lits[-1*i]);
+	}
+	
+	// Free list of Var/Lit pointers in sat_state
+	free(sat_state->vars);
+	free(sat_state->lits);
+	
+	// Free list of Lit pointers in each clause
+	for(c2dSize i = 1; i <= sat_state->num_clauses; i++) {
+		free(sat_state->CNF[i].literals);
+	}
+	
+	// Free list of Clause pointers in sat_state
+	free(sat_state->CNF);
+	
+	// Free sat_state struct itself
+	free(sat_state);
 }
 
 /******************************************************************************

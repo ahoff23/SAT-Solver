@@ -10,20 +10,29 @@ typedef unsigned long c2dSize;  //for variables, clauses, and various things
 typedef signed long c2dLiteral; //for literals
 typedef double c2dWmc;          //for (weighted) model count
 
+typedef struct var Var;
+typedef struct literal Lit;
+typedef struct clause Clause;
+typedef struct sat_state_t SatState;
+typedef struct decision Decision;
+
 /******************************************************************************
 * LIST OF  c2dSize variables
 ******************************************************************************/
 
+
+/*********** Removing for compiling sake
+
 //List node for c2dSize lists
-typedef struct c2dSizeNode {
+typedef struct c2dSizeNode_t {
 	c2dSize node_c2dSize;			//Index of variable the node refers to
 	Var* variable;					//Pointer to the variable itself
-	struct c2dSizeNode *next;		//Next literal node in the list
-};
+	struct c2dSizeNode_t *next;		//Next literal node in the list
+} c2dSizeNode;
 
 //Pop the head from the list
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
-c2dSize c2dSizeList_pop(struct c2dSizeNode* head)
+c2dSize c2dSizeList_pop(c2dSizeNode* head)
 {
 	if (head == NULL)
 		return NULL;
@@ -32,7 +41,7 @@ c2dSize c2dSizeList_pop(struct c2dSizeNode* head)
 	c2dSize head_c2dSize = head->node_c2dSize;
 
 	//Get the next node pointed to by the head of the list
-	struct c2dSizeNode* temp_next = head->next;
+	c2dSizeNode* temp_next = head->next;
 
 	//Free the memory allocated in the head node
 	free(head);
@@ -46,10 +55,10 @@ c2dSize c2dSizeList_pop(struct c2dSizeNode* head)
 
 //Push a new node onto the list
 //@param new_lit: The literal to be pushed to the list
-void c2dSizeList_push(struct c2dSizeNode* head, c2dSize new_c2dSize)
+void c2dSizeList_push(c2dSizeNode* head, c2dSize new_c2dSize)
 {
 	//Create a node for the new literal
-	struct c2dSizeNode *new_node = (struct c2dSizeNode*) malloc(sizeof(struct c2dSizeNode));
+	c2dSizeNode *new_node = (c2dSizeNode*) malloc(sizeof(c2dSizeNode));
 	new_node->node_c2dSize = new_c2dSize;
 
 	//Set the new node's successor to the head of the list
@@ -59,27 +68,29 @@ void c2dSizeList_push(struct c2dSizeNode* head, c2dSize new_c2dSize)
 	head = new_node;
 }
 
+*////////// End of c2dSizeNode
+
 
 /******************************************************************************
 * LIST OF literals
 ******************************************************************************/
 
 //List node for literal lists
-typedef struct litNode {
-	struct Lit *node_lit;		//Index of the literal the node refers to
+typedef struct litNode_t {
+	Lit *node_lit;		//Index of the literal the node refers to
 	Lit* literal;				//Pointer to the literal
-	struct litNode *next;		//Next literal node in the list
-};
+	struct litNode_t *next;		//Next literal node in the list
+} litNode;
 
 //Pop the head from the list
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
-struct Lit* litList_pop(struct litNode* head)
+Lit* litList_pop(litNode* head)
 {
 	//Get the literal pointed to by the head of the list
-	struct Lit* head_lit = head->node_lit;
+	Lit* head_lit = head->node_lit;
 
 	//Get the next node pointed to by the head of the list
-	struct litNode* temp_next = head->next;
+	litNode* temp_next = head->next;
 
 	//Free the memory allocated in the head node
 	free(head);
@@ -91,10 +102,10 @@ struct Lit* litList_pop(struct litNode* head)
 	return head_lit;
 }
 
-void litList_push(struct litNode* head, struct Lit* new_lit)
+void litList_push(litNode* head, Lit* new_lit)
 {
 	//Create a node for the new literal
-	struct litNode *new_node = (struct litNode*)malloc(sizeof(struct litNode));
+	litNode *new_node = (litNode*)malloc(sizeof(litNode));
 	new_node->node_lit = new_lit;
 
 	//Set the new node's successor to the head of the list
@@ -109,20 +120,20 @@ void litList_push(struct litNode* head, struct Lit* new_lit)
 ******************************************************************************/
 
 //List node for decision lists (stack structure)
-typedef struct decNode {
-	struct Decision *node_dec;		//Literal the node refers to
-	struct decNode *next;			//Next literal node in the list
-};
+typedef struct decNode_t {
+	Decision *node_dec;		//Literal the node refers to
+	struct decNode_t *next;			//Next literal node in the list
+} decNode;
 
 //Pop the head from the list
 //@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
-Decision* decList_pop(struct decNode* head)
+Decision* decList_pop(decNode* head)
 {
 	//Get the literal pointed to by the head of the list
-	struct Decision* head_dec = head->node_dec;
+Decision* head_dec = head->node_dec;
 
 	//Get the next node pointed to by the head of the list
-	struct decNode* temp_next = head->next;
+	decNode* temp_next = head->next;
 
 	//Free the memory allocated in the head node
 	free(head);
@@ -136,10 +147,10 @@ Decision* decList_pop(struct decNode* head)
 
 //Push a new node onto the list
 //@param new_dec: the decision to be pushed to the list
-void decList_push(struct decNode* head, struct Decision* new_dec)
+void decList_push(decNode* head, Decision* new_dec)
 {
 	//Create a node for the new literal
-	struct decNode *new_node = (struct decNode*)malloc(sizeof(struct decNode));
+	decNode *new_node = (decNode*)malloc(sizeof(decNode));
 	new_node->node_dec = new_dec;
 
 	//Set the new node's successor to the head of the list
@@ -154,20 +165,20 @@ void decList_push(struct decNode* head, struct Decision* new_dec)
 ******************************************************************************/
 
 //List node for decision lists (stack structure)
-typedef struct clauseNode {
-	struct clause *node_clause;		//Literal the node refers to
-	struct clauseNode *next;		//Next literal node in the list
-};
+typedef struct clauseNode_t {
+	Clause *node_clause;		//Literal the node refers to
+	struct clauseNode_t *next;		//Next literal node in the list
+} clauseNode;
 
 //Pop the head from the list
 //@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
-Clause* clauseList_pop(struct clauseNode* head)
+Clause* clauseList_pop(clauseNode* head)
 {
 	//Get the literal pointed to by the head of the list
-	struct Clause* head_clause = head->node_clause;
+	Clause* head_clause = head->node_clause;
 
 	//Get the next node pointed to by the head of the list
-	struct clauseNode* temp_next = head->next;
+	clauseNode* temp_next = head->next;
 
 	//Free the memory allocated in the head node
 	free(head);
@@ -181,10 +192,10 @@ Clause* clauseList_pop(struct clauseNode* head)
 
 //Push a new node onto the list
 //@param new_dec: the decision to be pushed to the list
-void clauseList_push(struct clauseNode* head, struct Clause* new_clause)
+void clauseList_push(clauseNode* head, Clause* new_clause)
 {
 	//Create a node for the new literal
-	struct clauseNode *new_node = (struct clauseNode*)malloc(sizeof(struct clauseNode));
+	clauseNode *new_node = (clauseNode*)malloc(sizeof(clauseNode));
 	new_node->node_clause = new_clause;
 
 	//Set the new node's successor to the head of the list

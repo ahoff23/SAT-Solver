@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "uthash-master\src\uthash.h"
+#include "uthash-master/src/uthash.h"
 #include "Lists.h"
 
 /******************************************************************************
@@ -58,7 +58,7 @@ typedef struct var {
 	int decision_level;				//Decision level at which the variable is instantiated
 	Lit* pos_lit;					//The positive literal corresponding to this variable
 	Lit* neg_lit;					//The negative literal corresponding to this variable
-	struct ClauseNode* clauses;		//Clauses mentioning this variable
+	clauseNode* clauses;		//Clauses mentioning this variable
 	unsigned long num_mentioned;	//Number of clauses mentioning this literal
 
 	BOOLEAN mark; //THIS FIELD MUST STAY AS IS
@@ -74,11 +74,11 @@ typedef struct var {
 ******************************************************************************/
 
 typedef struct literal {
-	c2dLiteral index;					//Literal index (you can change the variable name as you wish)
-	BOOLEAN truth_value;				//1 if the variable is true, 0 if it is false, -1 if it is not set
-	Var* var;							//The variable corresponding to this literal	
-	struct clauseNode* clauses;			//List of clauses containing this literal
-	struct clauseNode* learnedClause;	//List of clauses containing this literal that were learned
+	c2dLiteral index;					// Literal index
+	BOOLEAN implied;					// 1 if the literal is implied (by decision or inference), 0 otherwise
+	Var* var;								// The variable corresponding to this literal	
+	clauseNode* clauses;			//List of clauses containing this literal
+	clauseNode* learnedClause;	//List of clauses containing this literal that were learned
 } Lit;
 
 /******************************************************************************
@@ -115,23 +115,24 @@ typedef struct clause {
 ******************************************************************************/
 
 typedef struct sat_state_t {
+	// Garrett - could we change these to simple arrays of Var? Not pointers to vars? Similar to the array of clauses a few lines down.
 	Var** vars;									//Array of pointers to variables (indices 1 to n)
 	Lit** lits;									//Array of pointers to literals (indices -n to -1 and 1 to n)
-	c2dLiteral num_lits;						//Number of literals
+	c2dLiteral num_lits;						//Number of literals, Garrett - Redundant?
 	c2dSize num_vars;							//Number of variables
 	c2dSize num_clauses;						//Number of clauses in the CNF
 	int decision_level;							//Current decision level
 	Clause *CNF;								//Array of clauses forming the CNF
-	struct clauseNode *learnedClauses;			//List of learned clauses
-	struct decNode decisions;					//List of the decisions made (head is the most recent decision)
+	clauseNode *learnedClauses;			//List of learned clauses
+	decNode *decisions;					//List of the decisions made (head is the most recent decision)
 	//struct litNode free_lits;					//List of free literals
 	c2dSize num_learned;						//Number of learned clauses
 
 } SatState;
 
-typedef struct {
+typedef struct decision{
 	Lit* dec_lit;				//Literal on which the decision was made
-	struct litNode units;		//Unit literals found based on the decision made at this level
+	litNode *units;		//Unit literals found based on the decision made at this level
 } Decision;
 
 /******************************************************************************
@@ -210,16 +211,16 @@ void sat_undo_decide_literal(SatState* sat_state);
 Lit* opp_lit(const Lit* lit);
 
 //Remove literal (performed when the opposite literal is decided or asserted by unit resolution)
-Clause* add_opposite(struct indices_list* clauses);
+Clause* add_opposite(clauseNode* clauses);
 
 //Subsume all clauses containing a literal
-void subsume_clauses(Lit* lit, struct indices_list* clauses);
+void subsume_clauses(Lit* lit, clauseNode* clauses);
 
 //Undo any subsumptions that occurred due to a decision or unit resolution
-void undo_subsume_clauses(Lit* lit, struct clauseNode* clauses);
+void undo_subsume_clauses(Lit* lit, clauseNode* clauses);
 
 //Undo remove literal (performed when the opposite literal is decided or asserted by unit resolution)
-void undo_add_opposite(struct clauseNode* clauses);
+void undo_add_opposite(clauseNode* clauses);
 
 /******************************************************************************
 * Clauses
@@ -254,7 +255,7 @@ c2dSize sat_learned_clause_count(const SatState* sat_state);
 Clause* sat_assert_clause(Clause* clause, SatState* sat_state);
 
 //Check if a specific list of clauses are subsumed
-BOOLEAN check_list_subsumed(struct indices_list *clause_indices);
+BOOLEAN check_list_subsumed(clauseNode *clause_indices);
 
 /******************************************************************************
 * SatState
