@@ -66,8 +66,7 @@ void c2dSizeList_push(struct c2dSizeNode* head, c2dSize new_c2dSize)
 
 //List node for literal lists
 typedef struct litNode {
-	struct Lit *node_lit;		//Index of the literal the node refers to
-	Lit* literal;				//Pointer to the literal
+	struct lit *node_lit;		//Pointer to the literal the node refers to
 	struct litNode *next;		//Next literal node in the list
 };
 
@@ -91,6 +90,7 @@ struct Lit* litList_pop(struct litNode* head)
 	return head_lit;
 }
 
+//This function should ONLY BE CALLED IF THE LIST DOES NOT HAVE A TAIL
 void litList_push(struct litNode* head, struct Lit* new_lit)
 {
 	//Create a node for the new literal
@@ -104,13 +104,32 @@ void litList_push(struct litNode* head, struct Lit* new_lit)
 	head = new_node;
 }
 
+//This function should ONLY BE CALLED IF THE LIST HAS A HEAD AND A TAIL
+void litList_push_back(struct litNode* head, struct litNode* tail, struct Lit* new_lit)
+{
+	//Create a node for the new literal
+	struct litNode *new_node = (struct litNode*)malloc(sizeof(struct litNode));
+	new_node->node_lit = new_lit;
+
+	if (head == NULL)
+		head = tail = new_lit;
+	else
+	{
+		//Set the new node's successor to the head of the list
+		tail->next = new_node;
+
+		//Set the head of the list to the new node
+		tail = new_node;
+	}
+}
+
 /******************************************************************************
 * LIST OF  decision variables
 ******************************************************************************/
 
 //List node for decision lists (stack structure)
 typedef struct decNode {
-	struct Decision *node_dec;		//Literal the node refers to
+	struct decision *node_dec;		//Literal the node refers to
 	struct decNode *next;			//Next literal node in the list
 };
 
