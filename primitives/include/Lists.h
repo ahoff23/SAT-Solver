@@ -76,9 +76,9 @@ void c2dSizeList_push(c2dSizeNode* head, c2dSize new_c2dSize)
 ******************************************************************************/
 
 //List node for literal lists
+
 typedef struct litNode_t {
-	Lit *node_lit;		//Index of the literal the node refers to
-	Lit* literal;				//Pointer to the literal
+	Lit *node_lit;		//Pointer to the literal the node refers to
 	struct litNode_t *next;		//Next literal node in the list
 } litNode;
 
@@ -102,6 +102,7 @@ Lit* litList_pop(litNode* head)
 	return head_lit;
 }
 
+//This function should ONLY BE CALLED IF THE LIST DOES NOT HAVE A TAIL
 void litList_push(litNode* head, Lit* new_lit)
 {
 	//Create a node for the new literal
@@ -113,6 +114,25 @@ void litList_push(litNode* head, Lit* new_lit)
 
 	//Set the head of the list to the new node
 	head = new_node;
+}
+
+//This function should ONLY BE CALLED IF THE LIST HAS A HEAD AND A TAIL
+void litList_push_back(struct litNode* head, struct litNode* tail, struct Lit* new_lit)
+{
+	//Create a node for the new literal
+	struct litNode *new_node = (struct litNode*)malloc(sizeof(struct litNode));
+	new_node->node_lit = new_lit;
+
+	if (head == NULL)
+		head = tail = new_lit;
+	else
+	{
+		//Set the new node's successor to the head of the list
+		tail->next = new_node;
+
+		//Set the head of the list to the new node
+		tail = new_node;
+	}
 }
 
 /******************************************************************************
@@ -130,7 +150,7 @@ typedef struct decNode_t {
 Decision* decList_pop(decNode* head)
 {
 	//Get the literal pointed to by the head of the list
-Decision* head_dec = head->node_dec;
+	Decision* head_dec = head->node_dec;
 
 	//Get the next node pointed to by the head of the list
 	decNode* temp_next = head->next;

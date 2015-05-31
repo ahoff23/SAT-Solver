@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "uthash-master/src/uthash.h"
 #include "Lists.h"
 
 /******************************************************************************
@@ -53,13 +52,14 @@ typedef double c2dWmc;          //for (weighted) model count
 ******************************************************************************/
 
 typedef struct var {
-	c2dSize index;					//variable index (you can change the variable name as you wish)
 	int instantiated;				//1 if the variable has been instantiated, 0 otherwise
-	int decision_level;				//Decision level at which the variable is instantiated
+
 	Lit* pos_lit;					//The positive literal corresponding to this variable
 	Lit* neg_lit;					//The negative literal corresponding to this variable
-	clauseNode* clauses;		//Clauses mentioning this variable
 	unsigned long num_mentioned;	//Number of clauses mentioning this literal
+
+	c2dSize index;					//Variable index (you can change the variable name as you wish)
+	int decision_level;				//Decision level at which the variable is instantiated
 
 	BOOLEAN mark; //THIS FIELD MUST STAY AS IS
 
@@ -94,14 +94,15 @@ typedef struct literal {
 typedef struct clause {
 	//c2dSize index;  clause index   (you can change the variable name as you wish)
 	//Lit** literals; literal array  (you can change the variable name as you wish
-	Lit** literals;			//Array of literals (CAN WE EXCLUDE THIS?)
+	Lit** literals;			//Array of literals
+	//signed long* lits;		//Array of indices of literals **********CHANGE TO LIST**********
 
-	signed long* lits;		//Array of indices of literals **********CHANGE TO LIST**********
 	BOOLEAN subsumed;		//1 if the clause is subsumed at the current decision level, 0 otherwise
 	int free_lits;			//Number of literals free at the current decision level (not updated after clause is subsumed)
 	Lit* subsumed_on;		//Literal which caused the clause to become subsumed
 	c2dSize index;			//Index of the clause in the CNF
 	c2dSize num_lits;		//The number of literals in the clause
+
 	int dec_level;			//Decision level at which the clause was learned. -1 if never learned (i.e. in the original CNF)
 
 	BOOLEAN mark; //THIS FIELD MUST STAY AS IS
@@ -118,21 +119,22 @@ typedef struct sat_state_t {
 	// Garrett - could we change these to simple arrays of Var? Not pointers to vars? Similar to the array of clauses a few lines down.
 	Var** vars;									//Array of pointers to variables (indices 1 to n)
 	Lit** lits;									//Array of pointers to literals (indices -n to -1 and 1 to n)
-	c2dLiteral num_lits;						//Number of literals, Garrett - Redundant?
+	Clause *CNF;								//Array of clauses forming the CNF
+	clauseNode *learnedClauses;			//List of learned clauses
+	c2dLiteral num_lits;						//Number of literals
 	c2dSize num_vars;							//Number of variables
 	c2dSize num_clauses;						//Number of clauses in the CNF
 	int decision_level;							//Current decision level
-	Clause *CNF;								//Array of clauses forming the CNF
-	clauseNode *learnedClauses;			//List of learned clauses
-	decNode *decisions;					//List of the decisions made (head is the most recent decision)
+	decNode decisions;					//List of the decisions made (head is the most recent decision)
 	//struct litNode free_lits;					//List of free literals
 	c2dSize num_learned;						//Number of learned clauses
-
 } SatState;
 
-typedef struct decision{
-	Lit* dec_lit;				//Literal on which the decision was made
-	litNode *units;		//Unit literals found based on the decision made at this level
+
+typedef struct decision {
+	Lit* dec_lit;					//Literal on which the decision was made
+	litNode units_tail;		//Unit literals found based on the decision made at this level (THIS NODE IS A TAIL NODE)
+	litNode units_head;		//Unit literals found based on the decision made at this level (THIS NODE IS A TAIL NODE)
 } Decision;
 
 /******************************************************************************
@@ -204,17 +206,24 @@ BOOLEAN sat_implied_literal(const Lit* lit);
 //returns a learned clause if unit resolution detected a contradiction, NULL otherwise
 Clause* sat_decide_literal(Lit* lit, SatState* sat_state);
 
+
+//Updates the CNF based on a decision of a literal or a unit resolution of a literal
+Clause* set_literal(Lit* lit, SatState* sat_state);
+
 //undoes the last literal decision and the corresponding implications obtained by unit resolution
 void sat_undo_decide_literal(SatState* sat_state);
 
 //Returns the opposite literal (i.e. if A, return -A. If -A, return A)
 Lit* opp_lit(const Lit* lit);
 
-//Remove literal (performed when the opposite literal is decided or asserted by unit resolution)
-Clause* add_opposite(clauseNode* clauses);
+//Remove literal (performed when the opposite literal is decided or asserted by unit resolution
+Clause* add_opposite(clauseNode* clauses, SatState* sat_state);
 
 //Subsume all clauses containing a literal
 void subsume_clauses(Lit* lit, clauseNode* clauses);
+
+//Undoes a decision of a literal or a unit resolution of a literal
+void undo_set_literal(Lit* lit, SatState* sat_state);
 
 //Undo any subsumptions that occurred due to a decision or unit resolution
 void undo_subsume_clauses(Lit* lit, clauseNode* clauses);
