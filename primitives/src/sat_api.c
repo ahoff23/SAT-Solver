@@ -212,7 +212,7 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	//Add literal to list of decisions
 	Decision* new_dec = (Decision*)malloc(sizeof(Decision));
 	new_dec->dec_lit = lit;
-	decList_push(&(sat_state->decisions),new_dec);
+	decList_push(sat_state->decisions,new_dec);
 
 	//Set the literal
 	set_literal(lit, sat_state);
@@ -307,7 +307,7 @@ Clause* add_opposite(struct clauseNode* clauses, SatState* sat_state)
 		if (curr->node_clause->free_lits == 1)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
-			dlitList_push_back(&(sat_state->decisions->node_dec->units_head), &(sat_state->decisions->node_dec->units_tail), unit_lit);
+			dlitList_push_back(sat_state->decisions->node_dec->units_head,sat_state->decisions->node_dec->units_tail,(struct lit*)unit_lit);
 		}
 
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
@@ -324,10 +324,10 @@ Clause* add_opposite(struct clauseNode* clauses, SatState* sat_state)
 //to L-1 before the call ends
 void sat_undo_decide_literal(SatState* sat_state) {
 	//Undo unit resolution								
-	undo_unit_resolution(sat_state);
+	sat_undo_unit_resolution(sat_state);
 	
 	//Undo the decision of the literal and remove the decision from the list of decisions
-	undo_set_literal(decList_pop(&(sat_state->decisions))->dec_lit, sat_state);
+	undo_set_literal(decList_pop(sat_state->decisions)->dec_lit, sat_state);
 
 	//Decrement the decision level
 	sat_state->decision_level--;
@@ -431,7 +431,7 @@ Lit** sat_clause_literals(const Clause* clause) {
 //returns the number of literals in a clause
 c2dSize sat_clause_size(const Clause* clause) {
 	if (clause == NULL)
-		return NULL;
+		return 0;
 	return clause->num_lits;
 }
 
@@ -767,13 +767,13 @@ void sat_state_free(SatState* sat_state) {
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state) {
 	//Create a litNode to traverse the decision's list of unit literals
-	struct dlitNode* trav = &(sat_state->decisions->node_dec->units_head);
+	struct dlitNode* trav = sat_state->decisions->node_dec->units_head;
 
 	//While not at the end of the literal list
 	while (trav != NULL)
 	{
 		//Set the literal and return 0 if unit resolution returns a contradiction clause
-		if (set_literal(trav->node_lit, sat_state) != NULL)
+		if (set_literal((Lit*)trav->node_lit, sat_state) != NULL)
 			return 0;
 
 		trav = trav->next;
@@ -791,7 +791,7 @@ void sat_undo_unit_resolution(SatState* sat_state) {
 	while (trav != NULL)
 	{
 		//Undo the unit resolution on the current literal
-		undo_set_literal(trav->node_lit, sat_state);
+		undo_set_literal((Lit*)trav->node_lit, sat_state);
 		
 		//Go to the next unit to undo resolution on
 		trav = trav->prev;
