@@ -67,13 +67,12 @@ BOOLEAN sat_irrelevant_var(const Var* var) {
 }
 
 //Check if a specific list of clauses are subsumed
-//@param clause_indices: A list of indices of clauses to check
-//@param sat_state: The sat state to check against
+//@param clauses: A list of clauses to check
 //@return 1 if all are subsumed, 0 otherwise
-BOOLEAN check_list_subsumed(clauseNode *clauses)
+BOOLEAN check_list_subsumed(clauseList* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode *curr = clauses;
+	clauseNode* curr = clauses->head;
 
 	//If the list is empty, then all clauses are subsumed
 	if (curr == NULL)
@@ -113,7 +112,7 @@ Clause* sat_clause_of_var(c2dSize index, const Var* var) {
 		return NULL;
 
 	//Create a node to traverse the list of clauses containing the positive literal
-	struct clauseNode *curr = sat_pos_literal(var)->clauses;
+	clauseNode *curr = sat_pos_literal(var)->clauses->head;
 
 	if (curr == NULL)
 		return NULL;
@@ -130,7 +129,7 @@ Clause* sat_clause_of_var(c2dSize index, const Var* var) {
 	} while ((curr = curr->next) != NULL);
 
 	//Create a node to traverse the list of clauses containing the positive literal
-	curr = sat_neg_literal(var)->clauses;
+	curr = sat_neg_literal(var)->clauses->head;
 
 	if (curr == NULL)
 		return NULL;
@@ -226,7 +225,7 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	else
 	{
 		sat_state->decision_level++; 	//Increment the decision level
-		return sat_state->learnedClauses->node_clause;
+		return sat_state->learnedClauses->head->node_clause;
 	}
 }
 
@@ -257,10 +256,10 @@ Clause* set_literal(Lit* lit, SatState* sat_state)
 //Subsume all clauses containing a literal
 //@param lit: the literal causing the subsumption
 //@param clauses: the list of clauses being subsumed
-void subsume_clauses(Lit* lit, clauseNode* clauses)
+void subsume_clauses(Lit* lit, clauseList* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses->head;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr == NULL)
@@ -283,10 +282,10 @@ void subsume_clauses(Lit* lit, clauseNode* clauses)
 //@param clauses: the clauses which are being updated
 //@param sat_state: the SatState of the problem space
 //@return contradiction clause if found, otherwise return NULL
-Clause* add_opposite(struct clauseNode* clauses, SatState* sat_state)
+Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses->head;
 
 	//Literal that will be unit resolved on
 	Lit* unit_lit;
@@ -307,7 +306,7 @@ Clause* add_opposite(struct clauseNode* clauses, SatState* sat_state)
 		if (curr->node_clause->free_lits == 1)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
-			dlitList_push_back(sat_state->decisions->node_dec->units_head,sat_state->decisions->node_dec->units_tail,(struct lit*)unit_lit);
+			dlitList_push_back(sat_state->decisions->head->node_dec->units->head,(struct lit*)unit_lit);
 		}
 
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
@@ -485,7 +484,7 @@ Clause* sat_assert_clause(Clause* clause, SatState* sat_state) {
 	if (sat_unit_resolution(sat_state) == 1)
 		return NULL;
 	else
-		return sat_state->learnedClauses->node_clause;
+		return sat_state->learnedClauses->head->node_clause;
 }
 
 //Gets the only literal not instantiated
@@ -767,7 +766,7 @@ void sat_state_free(SatState* sat_state) {
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state) {
 	//Create a litNode to traverse the decision's list of unit literals
-	struct dlitNode* trav = sat_state->decisions->node_dec->units_head;
+	dlitNode* trav = sat_state->decisions->head->node_dec->units->head;
 
 	//While not at the end of the literal list
 	while (trav != NULL)
@@ -785,7 +784,7 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 //after sat_unit_resolution()
 void sat_undo_unit_resolution(SatState* sat_state) {
 	//Create a litNode to traverse the decision's list of unit literals
-	struct dlitNode* trav = sat_state->decisions->node_dec->units_tail;
+	struct dlitNode* trav = sat_state->decisions->head->node_dec->units->tail;
 
 	//While not at the end of the literal list
 	while (trav != NULL)

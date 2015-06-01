@@ -81,10 +81,10 @@ typedef struct var {
 typedef struct literal {
 	c2dLiteral index;					//Literal index (you can change the variable name as you wish)
 	BOOLEAN truth_value;				//1 if the variable is true, 0 if it is false, -1 if it is not set
-	clauseNode* learnedClauses;			//List of clauses containing this literal that were learned
+	clauseList* learnedClauses;			//List of clauses containing this literal that were learned
 	Var* var;							//The variable corresponding to this literal	
-	struct clauseNode* clauses;			//List of clauses containing this literal						***MAKE ARRAY***
-	struct clauseNode* learnedClause;	//List of clauses containing this literal that were learned
+	clauseList* clauses;				//List of clauses containing this literal						***MAKE ARRAY***
+	clauseList* learnedClause;			//List of clauses containing this literal that were learned
 } Lit;
 
 /******************************************************************************
@@ -125,21 +125,19 @@ typedef struct sat_state_t {
 	Var** vars;									//Array of pointers to variables (indices 1 to n)
 	Lit** lits;									//Array of pointers to literals (indices -n to -1 and 1 to n)
 	Clause *CNF;								//Array of clauses forming the CNF
-	struct clauseNode *learnedClauses;			//List of learned clauses
+	clauseList *learnedClauses;					//List of learned clauses
 	c2dLiteral num_lits;						//Number of literals
 	c2dSize num_vars;							//Number of variables
 	c2dSize num_clauses;						//Number of clauses in the CNF
 	int decision_level;							//Current decision level
-	decNode* decisions;					//List of the decisions made (head is the most recent decision)
-	//struct litNode free_lits;					//List of free literals
+	decList* decisions;							//List of the decisions made (head is the most recent decision)
 	c2dSize num_learned;						//Number of learned clauses
 
 } SatState;
 
 typedef struct decision {
 	Lit* dec_lit;					//Literal on which the decision was made
-	dlitNode* units_tail;	//Unit literals found based on the decision made at this level (THIS NODE IS A TAIL NODE)
-	dlitNode* units_head;	//Unit literals found based on the decision made at this level (THIS NODE IS A TAIL NODE)
+	dlitList* units;			//Unit literals found based on the decision made at this level
 } Decision;
 
 /******************************************************************************
@@ -221,10 +219,10 @@ void sat_undo_decide_literal(SatState* sat_state);
 Lit* opp_lit(const Lit* lit);
 
 //Remove literal (performed when the opposite literal is decided or asserted by unit resolution)
-Clause* add_opposite(struct clauseNode* clauses, SatState* sat_state);
+Clause* add_opposite(clauseList* clauses, SatState* sat_state);
 
 //Subsume all clauses containing a literal
-void subsume_clauses(Lit* lit, clauseNode* clauses);
+void subsume_clauses(Lit* lit, clauseList* clauses);
 
 //Undoes a decision of a literal or a unit resolution of a literal
 void undo_set_literal(Lit* lit, SatState* sat_state);
@@ -268,7 +266,7 @@ c2dSize sat_learned_clause_count(const SatState* sat_state);
 Clause* sat_assert_clause(Clause* clause, SatState* sat_state);
 
 //Check if a specific list of clauses are subsumed
-BOOLEAN check_list_subsumed(clauseNode* clause);
+BOOLEAN check_list_subsumed(clauseList* clauses);
 
 //Gets the only literal not instantiated
 Lit* get_unit_lit(Clause* clause);
