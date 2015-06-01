@@ -53,11 +53,10 @@ typedef double c2dWmc;          //for (weighted) model count
 
 typedef struct var {
 	int instantiated;				//1 if the variable has been instantiated, 0 otherwise
-
 	Lit* pos_lit;					//The positive literal corresponding to this variable
 	Lit* neg_lit;					//The negative literal corresponding to this variable
 	unsigned long num_mentioned;	//Number of clauses mentioning this literal
-
+	BOOLEAN truth_value;		// 1 if this variable is set to true, 0 if to false, -1 if undecided.
 	c2dSize index;					//Variable index (you can change the variable name as you wish)
 	int decision_level;				//Decision level at which the variable is instantiated
 
@@ -77,8 +76,8 @@ typedef struct literal {
 	c2dLiteral index;					// Literal index
 	BOOLEAN implied;					// 1 if the literal is implied (by decision or inference), 0 otherwise
 	Var* var;								// The variable corresponding to this literal	
-	clauseNode* clauses;			//List of clauses containing this literal
-	clauseNode* learnedClause;	//List of clauses containing this literal that were learned
+	clauseNode* clauses;				//List of clauses containing this literal
+	clauseNode* learnedClauses;	//List of clauses containing this literal that were learned
 } Lit;
 
 /******************************************************************************
@@ -125,7 +124,7 @@ typedef struct sat_state_t {
 	c2dSize num_vars;							//Number of variables
 	c2dSize num_clauses;						//Number of clauses in the CNF
 	int decision_level;							//Current decision level
-	decNode decisions;					//List of the decisions made (head is the most recent decision)
+	decNode* decisions;					//List of the decisions made (head is the most recent decision)
 	//struct litNode free_lits;					//List of free literals
 	c2dSize num_learned;						//Number of learned clauses
 } SatState;

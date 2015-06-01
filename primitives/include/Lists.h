@@ -117,14 +117,14 @@ void litList_push(litNode* head, Lit* new_lit)
 }
 
 //This function should ONLY BE CALLED IF THE LIST HAS A HEAD AND A TAIL
-void litList_push_back(struct litNode* head, struct litNode* tail, struct Lit* new_lit)
+void litList_push_back(litNode* head, litNode* tail, Lit* new_lit)
 {
 	//Create a node for the new literal
-	struct litNode *new_node = (struct litNode*)malloc(sizeof(struct litNode));
+	litNode *new_node = (litNode*)malloc(sizeof(litNode));
 	new_node->node_lit = new_lit;
 
-	if (head == NULL)
-		head = tail = new_lit;
+	if (head == NULL);
+		//head = tail = new_lit; Incompatible types, won't compile
 	else
 	{
 		//Set the new node's successor to the head of the list
@@ -184,16 +184,21 @@ void decList_push(decNode* head, Decision* new_dec)
 * LIST OF clauses
 ******************************************************************************/
 
-//List node for decision lists (stack structure)
+//List node for clause lists (stack structure)
 typedef struct clauseNode_t {
-	Clause *node_clause;		//Literal the node refers to
-	struct clauseNode_t *next;		//Next literal node in the list
+	Clause *node_clause;				//Clause the node refers to
+	struct clauseNode_t *next;	//Next node in the list
 } clauseNode;
 
 //Pop the head from the list
-//@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
+//@return the clause pointed to by the former head of the list
 Clause* clauseList_pop(clauseNode* head)
 {
+	// If empty list, return null
+	if(head == NULL) {
+		return NULL;
+	}
+	
 	//Get the literal pointed to by the head of the list
 	Clause* head_clause = head->node_clause;
 
@@ -206,15 +211,15 @@ Clause* clauseList_pop(clauseNode* head)
 	//Set the head node to the second node in the list
 	head = temp_next;
 
-	//Return the literal pointed to by the former head of the list
+	//Return the clause pointed to by the former head of the list
 	return head_clause;
 }
 
 //Push a new node onto the list
-//@param new_dec: the decision to be pushed to the list
+//@param new_clause: the clause to be pushed to the list
 void clauseList_push(clauseNode* head, Clause* new_clause)
 {
-	//Create a node for the new literal
+	//Create a node for the new clause
 	clauseNode *new_node = (clauseNode*)malloc(sizeof(clauseNode));
 	new_node->node_clause = new_clause;
 
