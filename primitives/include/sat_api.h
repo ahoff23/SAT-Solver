@@ -59,8 +59,8 @@ struct literal;
 typedef struct var {
 	int instantiated;				//1 if the variable has been instantiated, 0 otherwise
 
-	struct literal* pos_lit;			//The positive literal corresponding to this variable
-	struct literal* neg_lit;			//The negative literal corresponding to this variable
+	struct literal* pos_lit;		//The positive literal corresponding to this variable
+	struct literal* neg_lit;		//The negative literal corresponding to this variable
 	unsigned long num_mentioned;	//Number of clauses mentioning this literal
 
 	c2dSize index;					//Variable index (you can change the variable name as you wish)
@@ -81,6 +81,7 @@ typedef struct var {
 typedef struct literal {
 	c2dLiteral index;					//Literal index (you can change the variable name as you wish)
 	BOOLEAN truth_value;				//1 if the variable is true, 0 if it is false, -1 if it is not set
+	clauseNode* learnedClauses;			//List of clauses containing this literal that were learned
 	Var* var;							//The variable corresponding to this literal	
 	struct clauseNode* clauses;			//List of clauses containing this literal						***MAKE ARRAY***
 	struct clauseNode* learnedClause;	//List of clauses containing this literal that were learned
@@ -129,7 +130,7 @@ typedef struct sat_state_t {
 	c2dSize num_vars;							//Number of variables
 	c2dSize num_clauses;						//Number of clauses in the CNF
 	int decision_level;							//Current decision level
-	decNode decisions;					//List of the decisions made (head is the most recent decision)
+	decNode* decisions;					//List of the decisions made (head is the most recent decision)
 	//struct litNode free_lits;					//List of free literals
 	c2dSize num_learned;						//Number of learned clauses
 

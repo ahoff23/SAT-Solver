@@ -4,6 +4,8 @@
 
 #include "C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\primitives\include\sat_api.h"
 
+#define maxLength 500
+
 /******************************************************************************
 * We explain here the functions you need to implement
 *
@@ -305,7 +307,7 @@ Clause* add_opposite(struct clauseNode* clauses, SatState* sat_state)
 		if (curr->node_clause->free_lits == 1)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
-			dlitList_push_back(&(sat_state->decisions.node_dec->units_head), &(sat_state->decisions.node_dec->units_tail), unit_lit);
+			dlitList_push_back(&(sat_state->decisions->node_dec->units_head), &(sat_state->decisions->node_dec->units_tail), unit_lit);
 		}
 
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
@@ -522,18 +524,214 @@ Lit* get_unit_lit(Clause* clause)
 
 //constructs a SatState from an input cnf file
 SatState* sat_state_new(const char* file_name) {
+	// Open file for reading
+	FILE* file = fopen(file_name, "r");
+	if (file == NULL) {
+		fprintf(stderr, "Could not open file %s\n", file_name);
+		exit(1);
+	}
 
-	// ... TO DO ...
+	c2dSize num_vars = 0, num_clauses = 0;
+	char line[maxLength];
 
-	return NULL; //dummy valued
+	// Capture problem line info (i.e. number of variables and clauses)
+	while (fgets(line, maxLength, file) != NULL) {
+		// Skip comment lines
+		if (line[0] == 'c' || line[0] == '%' || line[0] == '0')
+			continue;
+		// check for problem statement line
+		char* token;
+		if (line[0] == 'p') {
+			token = strtok(line, " \n"); // token == 'p'
+			token = strtok(NULL, " \n"); // token == 'cnf'
+
+			token = strtok(NULL, " \n"); // token == <number of variables>
+			num_vars = strtoul(token, NULL, 10);
+
+			token = strtok(NULL, " \n"); // token == <number of clauses>
+			num_clauses = strtoul(token, NULL, 10);
+			break;
+		}
+	}
+
+	// Create SatState, add basic values
+	SatState* satState = (SatState*)malloc(sizeof(SatState));
+	satState->num_vars = num_vars;
+	satState->num_clauses = num_clauses;
+	satState->num_lits = 2 * num_vars;
+	satState->decision_level = 0;
+	satState->num_learned = 0;
+	satState->decisions = NULL;
+
+	/************************************************************/
+	/****************SETUP VARS AND LITS *********************/
+	/***********************************************************/
+
+	satState->vars = (Var**)malloc((num_vars + 1) * sizeof(Var*));
+	satState->lits = (Lit**)malloc(((2 * num_vars) + 1) * sizeof(Lit*));
+
+	// This step set the start of the literals array in the middle, so we can index in + and - direction
+	satState->lits = satState->lits + num_vars;
+
+	satState->vars[0] = NULL;
+	satState->lits[0] = NULL;
+
+	for (c2dLiteral i = 1; i <= num_vars; i++) {
+		// Create variable and literal structs
+		Var* var = (Var*)malloc(sizeof(Var));
+		Lit* litp = (Lit*)malloc(sizeof(Lit));
+		Lit* litn = (Lit*)malloc(sizeof(Lit));
+
+		// Initialize Variable
+		var->index = i;
+		var->instantiated = 0;
+		var->pos_lit = litp;
+		var->neg_lit = litn;
+		satState->vars[i] = var; // add to satState
+
+		// Initialize positive literal
+		litp->index = i;
+		litp->var = var;
+		litp->clauses = NULL;
+		litp->learnedClauses = NULL;
+		satState->lits[i] = litp; // add to satState
+
+		// Initialize negative literal
+		litn->index = i * -1;
+		litn->var = var;
+		litn->clauses = NULL;
+		litn->learnedClauses = NULL;
+		satState->lits[i * -1] = litn; // add to satState
+	}
+
+
+	/************************************************************/
+	/********************SETUP CLAUSES ***********************/
+	/***********************************************************/
+
+	// Malloc space for clauses
+	Clause* clauses = (Clause*)malloc((num_clauses + 1) * sizeof(Clause)); // 1 indexed array
+
+	// Setup each clause (index starting at 1)
+	for (c2dSize i = 1; i <= num_clauses; i++) {
+		// Read in line if it is not a comment
+		do {
+			if (fgets(line, maxLength, file) == NULL) {
+				fprintf(stderr, "Read error, or EOF reached before all %ld CNF's read.\n", num_clauses);
+				exit(1);
+			}
+		} while (line[0] == 'c' || line[0] == '%' || line[0] == '0');
+		// line now contains our clause string
+		// Count number of literals in clause, so we can allocate the array to the appropriate size
+		int num_lits = 0, j = 0;
+		char* temp = line;
+		while (temp[j] != '\0') {
+			if (temp[j] == ' ') { // If we reach a space, increment num_lits
+				num_lits++;
+				while (temp[j + 1] == ' ') // go through all consecutive spaces, 
+					j++;
+			}
+			j++;
+		}
+
+		// Create literal array for this clause, of size num_lits
+		clauses[i].literals = (Lit**)malloc(num_lits * sizeof(Lit *));
+
+		// Add first literal to clause
+		char* lit_string = strtok(line, " \n"); // Get literal from line
+		c2dLiteral lit_index = strtol(lit_string, NULL, 10);	// convert from string to signed long
+		clauses[i].literals[0] = satState->lits[lit_index];
+
+		// Add clause to the literal's clause list.
+		clauseList_push(clauses[i].literals[0]->clauses, &(clauses[i]));
+
+		// Add rest of literals to clause
+		for (int j = 1; j < num_lits; j++) {
+			lit_string = strtok(NULL, " \n"); // Get literal from line
+			lit_index = strtol(lit_string, NULL, 10); // convert from string to signed long
+			clauses[i].literals[j] = satState->lits[lit_index];
+
+			// Add clause to the literal's clause list.
+			clauseList_push(clauses[i].literals[j]->clauses, &(clauses[i]));
+		}
+
+		// Set the other values for this Clause struct
+		clauses[i].subsumed = 0;
+		clauses[i].free_lits = num_lits;
+		clauses[i].subsumed_on = NULL;
+		clauses[i].index = i;
+		clauses[i].num_lits = num_lits;
+		clauses[i].dec_level = -1;
+	}
+
+	satState->CNF = clauses;
+
+	/***** TEST SETUP CODE *************
+	SatState* s = satState;
+	printf("num_lits=%ld num_vars=%lu num_clauses=%lu\n", s->num_lits, s->num_vars, s->num_clauses);
+	for(int i = 1; i <= s->num_vars; i++) {
+	Var* var = s->vars[i];
+	printf("var %lu instantiated %d\n", var->index, var->instantiated);
+	printf("negLit %ld posLit %ld \n\n", var->neg_lit->index, var->pos_lit->index);
+	}
+	// printouts below should match intput CNF format
+	for(int i = 1; i <= s->num_clauses; i++) {
+	Clause clause = s->CNF[i];
+	for(int j = 0; j < clause.num_lits-1; j++) {
+	printf("%ld ", clause.literals[j]->index);
+	}
+	printf("%ld 0\n", clause.literals[clause.num_lits-1]->index);
+	}
+	// print literals and list of clauses belonging to them
+	for(int i = 1; i <= s->num_vars; i++) {
+	Lit* lit = s->lits[i];
+	printf("lit %ld clauses ", lit->index);
+	clauseNode* clauseList = lit->clauses;
+	while(clauseList != NULL) {
+	printf("%lu ", clauseList->node_clause->index);
+	clauseList = clauseList->next;
+	}
+	printf("\n");
+	}
+
+	for(int i = -1; i >= -1*(s->num_vars); i--) {
+	Lit* lit = s->lits[i];
+	printf("lit %ld clauses ", lit->index);
+	clauseNode* clauseList = lit->clauses;
+	while(clauseList != NULL) {
+	printf("%lu ", clauseList->node_clause->index);
+	clauseList = clauseList->next;
+	}
+	printf("\n");
+	}
+
+	*************************************/
+	return satState;
 }
 
 //frees the SatState
 void sat_state_free(SatState* sat_state) {
+	// Free each Var and Lit struct
+	for (c2dLiteral i = 1; i <= sat_state->num_vars; i++) {
+		free(sat_state->vars[i]);
+		free(sat_state->lits[i]);
+		free(sat_state->lits[-1 * i]);
+	}
 
-	// ... TO DO ...
+	// Free list of Var/Lit pointers in sat_state
+	free(sat_state->vars);
+	free(sat_state->lits);
 
-	return; //dummy valued
+	// Free list of Lit pointers in each clause
+	for (c2dSize i = 1; i <= sat_state->num_clauses; i++) {
+		free(sat_state->CNF[i].literals);
+	}
+
+	// Free list of Clause pointers in sat_state
+	free(sat_state->CNF);
+
+	// Free sat_state struct itself
+	free(sat_state);
 }
 
 /******************************************************************************
@@ -569,7 +767,7 @@ void sat_state_free(SatState* sat_state) {
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state) {
 	//Create a litNode to traverse the decision's list of unit literals
-	struct dlitNode* trav = &(sat_state->decisions.node_dec->units_head);
+	struct dlitNode* trav = &(sat_state->decisions->node_dec->units_head);
 
 	//While not at the end of the literal list
 	while (trav != NULL)
@@ -587,7 +785,7 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 //after sat_unit_resolution()
 void sat_undo_unit_resolution(SatState* sat_state) {
 	//Create a litNode to traverse the decision's list of unit literals
-	struct dlitNode* trav = sat_state->decisions.node_dec->units_tail;
+	struct dlitNode* trav = sat_state->decisions->node_dec->units_tail;
 
 	//While not at the end of the literal list
 	while (trav != NULL)
