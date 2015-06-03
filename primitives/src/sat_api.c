@@ -1,8 +1,4 @@
-/*******************NOTE: CURRENTLY DOES NOT UNDO LERANING NEW CLAUSES*******************/
-
-
-
-#include "C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\primitives\include\sat_api.h"
+#include "sat_api.h"
 
 #define maxLength 500
 
@@ -562,14 +558,14 @@ SatState* sat_state_new(const char* file_name) {
 	satState->num_learned = 0;
 	satState->decisions = NULL;
 
-	/************************************************************/
-	/****************SETUP VARS AND LITS *********************/
-	/***********************************************************/
+	/*************************************************************/
+	/*********************SETUP VARS AND LITS*********************/
+	/*************************************************************/
 
 	satState->vars = (Var**)malloc((num_vars + 1) * sizeof(Var*));
 	satState->lits = (Lit**)malloc(((2 * num_vars) + 1) * sizeof(Lit*));
 
-	// This step set the start of the literals array in the middle, so we can index in + and - direction
+	// This step sets the start of the literals array in the middle, so we can index in + and - direction
 	satState->lits = satState->lits + num_vars;
 
 	satState->vars[0] = NULL;
@@ -604,9 +600,9 @@ SatState* sat_state_new(const char* file_name) {
 	}
 
 
-	/************************************************************/
-	/********************SETUP CLAUSES ***********************/
-	/***********************************************************/
+	/*************************************************************/
+	/************************SETUP CLAUSES************************/
+	/*************************************************************/
 
 	// Malloc space for clauses
 	Clause* clauses = (Clause*)malloc((num_clauses + 1) * sizeof(Clause)); // 1 indexed array
@@ -643,7 +639,7 @@ SatState* sat_state_new(const char* file_name) {
 
 		// Add clause to the literal's clause list.
 		clauseList_push(clauses[i].literals[0]->clauses, &(clauses[i]));
-
+		
 		// Add rest of literals to clause
 		for (int j = 1; j < num_lits; j++) {
 			lit_string = strtok(NULL, " \n"); // Get literal from line
