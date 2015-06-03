@@ -9,9 +9,9 @@
 typedef unsigned long c2dSize;  //for variables, clauses, and various things
 typedef signed long c2dLiteral; //for literals
 typedef double c2dWmc;          //for (weighted) model count
-struct lit;
-struct decision;
-struct clause;
+typedef struct literal Lit;
+typedef struct decision Decision;
+typedef struct clause Clause;
 
 /******************************************************************************
 * LIST OF literals
@@ -19,7 +19,7 @@ struct clause;
 
 //List node for literal lists
 typedef struct litNode {
-	struct lit *node_lit;		//Pointer to the literal the node refers to
+	Lit *node_lit;		//Pointer to the literal the node refers to
 	struct litNode *next;		//Next literal node in the list
 } litNode;
 
@@ -30,10 +30,10 @@ typedef struct litList {
 
 //Pop the head from the list
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
-struct lit* litList_pop(litList* list)
+Lit* litList_pop(litList* list)
 {
-	struct lit* head_lit;					//Stores the literal stored in the head of the list
-	struct litNode* temp_next;				//Temporarily stores the second node in the list
+	Lit* head_lit;					//Stores the literal stored in the head of the list
+	litNode* temp_next;				//Temporarily stores the second node in the list
 
 	//Get the literal pointed to by the head of the list
 	head_lit = list->head->node_lit;
@@ -52,7 +52,7 @@ struct lit* litList_pop(litList* list)
 }
 
 //This function should ONLY BE CALLED IF THE LIST DOES NOT HAVE A TAIL
-void litList_push(litList* list, struct lit* new_lit)
+void litList_push(litList* list, Lit* new_lit)
 {
 	litNode* new_node;		//Will store the new node
 
@@ -73,7 +73,7 @@ void litList_push(litList* list, struct lit* new_lit)
 
 //List node for decision lists (stack structure)
 typedef struct decNode {
-	struct decision *node_dec;		//Literal the node refers to
+	Decision *node_dec;		//Literal the node refers to
 	struct decNode *next;			//Next literal node in the list
 }decNode;
 
@@ -84,9 +84,9 @@ typedef struct decList {
 
 //Pop the head from the list
 //@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
-struct decision* decList_pop(decList* list)
+Decision* decList_pop(decList* list)
 {
-	struct decision* head_dec;		//Stores the decision at the head of the list
+	Decision* head_dec;		//Stores the decision at the head of the list
 	decNode* temp_next;				//Stores the second node in the list
 
 	//Get the literal pointed to by the head of the list
@@ -107,7 +107,7 @@ struct decision* decList_pop(decList* list)
 
 //Push a new node onto the list
 //@param new_dec: the decision to be pushed to the list
-void decList_push(decList* list, struct decision* new_dec)
+void decList_push(decList* list, Decision* new_dec)
 {
 	decNode *new_node;		//Store the new node
 
@@ -128,7 +128,7 @@ void decList_push(decList* list, struct decision* new_dec)
 
 //List node for decision lists (stack structure)
 typedef struct clauseNode {
-	struct clause *node_clause;			//Literal the node refers to
+	Clause *node_clause;			//Literal the node refers to
 	struct clauseNode *next;			//Next literal node in the list
 } clauseNode;
 
@@ -139,9 +139,9 @@ typedef struct clauseList {
 
 //Pop the head from the list
 //@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
-struct clause* clauseList_pop(clauseList* list)
+Clause* clauseList_pop(clauseList* list)
 {
-	struct clause* head_clause;			//Stores the clause in the head of the list
+	Clause* head_clause;			//Stores the clause in the head of the list
 	clauseNode* temp_next;				//Stores the second node in the list
 
 	//Get the literal pointed to by the head of the list
@@ -162,7 +162,7 @@ struct clause* clauseList_pop(clauseList* list)
 
 //Push a new node onto the list
 //@param new_dec: the decision to be pushed to the list
-void clauseList_push(clauseList* list, struct clause* new_clause)
+void clauseList_push(clauseList* list, Clause* new_clause)
 {
 	clauseNode* new_node;		//Stores the new node
 
@@ -183,7 +183,7 @@ void clauseList_push(clauseList* list, struct clause* new_clause)
 
 //List node for literal lists
 typedef struct dlitNode {
-	struct lit* node_lit;				//Pointer to the literal the node refers to
+	Lit* node_lit;				//Pointer to the literal the node refers to
 	struct dlitNode *next;		//Next literal node in the list
 	struct dlitNode *prev;		//Previous literal node in the list
 } dlitNode;
@@ -196,9 +196,9 @@ typedef struct dlitList {
 
 //Pop the head from the list
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
-struct lit* dlitList_pop(dlitList* list)
+Lit* dlitList_pop(dlitList* list)
 {
-	struct lit* head_lit;		//Stores the literal in the head of the list
+	Lit* head_lit;		//Stores the literal in the head of the list
 	dlitNode* temp_next;	//Stores the second node in the list
 
 	//If the list is empty, return NULL
@@ -222,7 +222,7 @@ struct lit* dlitList_pop(dlitList* list)
 }
 
 //This function should ONLY BE CALLED IF THE LIST HAS A HEAD AND A TAIL
-void dlitList_push_back(dlitList* list, struct lit* new_lit)
+void dlitList_push_back(dlitList* list, Lit* new_lit)
 {
 	dlitNode *new_node;		//Stores the new node
 

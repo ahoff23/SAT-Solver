@@ -302,7 +302,7 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		if (curr->node_clause->free_lits == 1)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
-			dlitList_push_back(sat_state->decisions->head->node_dec->units->head,(struct lit*)unit_lit);
+			dlitList_push_back(sat_state->decisions->head->node_dec->units,unit_lit);
 		}
 
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
