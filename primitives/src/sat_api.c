@@ -354,10 +354,10 @@ void undo_set_literal(Lit* lit, SatState* sat_state)
 //Undo any subsumptions that occurred due to a decision or unit resolution
 //@param lit: the literal on which the clause was subsumed
 //@param clauses: the list of clauses containing lit
-void undo_subsume_clauses(Lit* lit, struct clauseNode* clauses)
+void undo_subsume_clauses(Lit* lit, clauseList* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses->head;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr == NULL)
@@ -378,10 +378,10 @@ void undo_subsume_clauses(Lit* lit, struct clauseNode* clauses)
 
 //Undo remove literal (performed when the opposite literal is decided or asserted by unit resolution)
 //@param clauses: the clauses which are being updated
-void undo_add_opposite(struct clauseNode* clauses)
+void undo_add_opposite(clauseList* clauses)
 {
 	//Create a node to traverse the list
-	struct clauseNode* curr = clauses;
+	clauseNode* curr = clauses->head;
 
 	//Loop through every clause containing the opposite of the literal
 	if (curr == NULL)
@@ -780,7 +780,7 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 //after sat_unit_resolution()
 void sat_undo_unit_resolution(SatState* sat_state) {
 	//Create a litNode to traverse the decision's list of unit literals
-	struct dlitNode* trav = sat_state->decisions->head->node_dec->units->tail;
+	dlitNode* trav = sat_state->decisions->head->node_dec->units->tail;
 
 	//While not at the end of the literal list
 	while (trav != NULL)

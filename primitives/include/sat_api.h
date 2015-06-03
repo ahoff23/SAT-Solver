@@ -228,10 +228,10 @@ void subsume_clauses(Lit* lit, clauseList* clauses);
 void undo_set_literal(Lit* lit, SatState* sat_state);
 
 //Undo any subsumptions that occurred due to a decision or unit resolution
-void undo_subsume_clauses(Lit* lit, struct clauseNode* clauses);
+void undo_subsume_clauses(Lit* lit, clauseList* clauses);
 
 //Undo remove literal (performed when the opposite literal is decided or asserted by unit resolution)
-void undo_add_opposite(struct clauseNode* clauses);
+void undo_add_opposite(clauseList* clauses);
 
 /******************************************************************************
 * Clauses
