@@ -100,8 +100,8 @@ typedef struct literal {
 typedef struct clause {
 	//c2dSize index;  clause index   (you can change the variable name as you wish)
 	//Lit** literals; literal array  (you can change the variable name as you wish
-	Lit** literals;			//Array of literals
-	//signed long* lits;		//Array of indices of literals **********CHANGE TO LIST**********
+	Lit** literals;			//Array of pointers to literals
+	//signed long* lits;	//Array of indices of literals **********CHANGE TO LIST**********
 
 	BOOLEAN subsumed;		//1 if the clause is subsumed at the current decision level, 0 otherwise
 	int free_lits;			//Number of literals free at the current decision level (not updated after clause is subsumed)
@@ -285,9 +285,15 @@ void sat_state_free(SatState* sat_state);
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state);
 
+//Check all of the initial clauses in the CNF are unit, and perform unit resolution if they are
+BOOLEAN initial_unit_resolution(SatState* sat_state);
+
 //undoes sat_unit_resolution(), leading to un-instantiating variables that have been instantiated
 //after sat_unit_resolution()
 void sat_undo_unit_resolution(SatState* sat_state);
+
+//Undoes resolution at decision level 0 (i.e. before a decision is made)
+void undo_all_resolution(SatState* sat_state);
 
 //returns 1 if the decision level of the sat state equals to the assertion level of clause,
 //0 otherwise

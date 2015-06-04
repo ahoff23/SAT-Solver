@@ -761,6 +761,10 @@ void sat_state_free(SatState* sat_state) {
 //applies unit resolution to the cnf of sat state
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state) {
+	//Run a special unit resolution if no decision has been made
+	if (sat_state->decision_level == 0)
+		return initial_unit_resolution(sat_state);
+
 	//Create a litNode to traverse the decision's list of unit literals
 	dlitNode* trav = sat_state->decisions->head->node_dec->units->head;
 
@@ -768,7 +772,7 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 	while (trav != NULL)
 	{
 		//Set the literal and return 0 if unit resolution returns a contradiction clause
-		if (set_literal((Lit*)trav->node_lit, sat_state) != NULL)
+		if (set_literal(trav->node_lit, sat_state) != NULL)
 			return 0;
 
 		trav = trav->next;
@@ -776,9 +780,33 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 	return 1;		//Resolution completed without returning a contradiction clause i.e. unit resolution succeeded
 }
 
+//Check all of the initial clauses in the CNF are unit, and perform unit resolution if they are
+//DOES NOT CHECK LEARNED CLAUSES
+//@param sat_state: the SatState to investigate
+//@return 0 if a contradiction is found, 1 otherwise
+BOOLEAN initial_unit_resolution(SatState* sat_state)
+{
+	//Loop through each clause in the CNF
+	for (int i = 0; i < sat_state->num_clauses; i++)
+	{
+		//If the clause has one free literal, perform unit resolution
+		if (sat_state->CNF[i].free_lits == 1)
+		{
+			//Check if a contradiction is found when setting the unit literal
+			if (set_literal(get_unit_lit(&sat_state->CNF[i]), sat_state) != NULL)
+				return 0;
+		}
+	}
+	return 1;
+}
+
 //undoes sat_unit_resolution(), leading to un-instantiating variables that have been instantiated
 //after sat_unit_resolution()
 void sat_undo_unit_resolution(SatState* sat_state) {
+	//Special case if at decision level 0
+	if (sat_state->decision_level == 0)
+		undo_all_resolution(sat_state);
+
 	//Create a litNode to traverse the decision's list of unit literals
 	dlitNode* trav = sat_state->decisions->head->node_dec->units->tail;
 
@@ -790,6 +818,20 @@ void sat_undo_unit_resolution(SatState* sat_state) {
 		
 		//Go to the next unit to undo resolution on
 		trav = trav->prev;
+	}
+}
+
+//Undoes resolution at decision level 0 (i.e. before a decision is made)
+//DOES NOT CHECK LEARNED CLAUSES
+//@param sat_state: the SatState to undo resolution on
+void undo_all_resolution(SatState* sat_state)
+{
+	//Loop through all clauses
+	for (int i = 0; i < sat_state->num_clauses; i++)
+	{
+		//If the clause contains 1 literal, undo the setting of that literal
+		if (sat_state->CNF[i].num_lits == 1)
+			undo_set_literal(sat_state->CNF[i].literals[0], sat_state);
 	}
 }
 
