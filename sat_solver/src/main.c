@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\sat_solver\include\sat_api.h"
+#include "sat_api.h"
 
 /******************************************************************************
 * SAT solver

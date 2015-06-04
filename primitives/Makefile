@@ -15,6 +15,9 @@ sat: $(OBJS)
 
 %.o: %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c $< -o $@
+	
+copy: $(LIB_FILE)
+	cp $(LIB_FILE) ../sat_solver/lib/$(LIB_FILE)
 
 clean:
 	rm -f $(OBJS) $(LIB_FILE)
