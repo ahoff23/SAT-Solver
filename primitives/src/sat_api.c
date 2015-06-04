@@ -206,32 +206,34 @@ BOOLEAN sat_implied_literal(const Lit* lit) {
 Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	//Add literal to list of decisions
 	Decision* new_dec = (Decision*)malloc(sizeof(Decision));
-	// TODO: new_dec->units = (dlitList*) malloc(sizeof(dlitList)); ???
+	new_dec->units = (dlitList*) malloc(sizeof(dlitList));
 	new_dec->dec_lit = lit;
 	decList_push(sat_state->decisions,new_dec);
 
+	sat_state->decision_level++;	//Increment the decision level
+
 	//Set the literal
-	// TODO: Shouldn't this lit be at decision level + 1? 
 	// TODO: Also should it have some Clause* return value that is used for something?
-	set_literal(lit, sat_state); 
-		
+	Clause* contradiction_clause = set_literal(lit, sat_state); 
+	
+	//TODO: TENTATIVE
+	if (contradiction_clause != NULL)
+	{
+		//FIND ASSERTION CLAUSE
+		//RETURN LEARNED CLAUSE
+	}
+
 	//Run unit resolution
 	if (sat_unit_resolution(sat_state) == 1)
-	{
-		sat_state->decision_level++;	//Increment the decision level
 		return NULL;
-	}
 	else
-	{
-		sat_state->decision_level++; 	//Increment the decision level
 		return sat_state->learnedClauses->head->node_clause;
-	}
 }
 
 //Updates the CNF based on a decision of a literal or a unit resolution of a literal
 //@param lit: the literal being updated or decided on
 //@param sat_state: the SatState of the CNF
-//@return a contradicted clause if one is found via add_opposite, NULL if no contradictionis found
+//@return a contradicted clause if one is found via add_opposite, NULL if no contradiction is found
 Clause* set_literal(Lit* lit, SatState* sat_state)
 {
 	//Set variable to instantiated
@@ -406,7 +408,7 @@ void undo_add_opposite(clauseList* clauses)
 
 //returns a clause structure for the corresponding index
 Clause* sat_index2clause(c2dSize index, const SatState* sat_state) {
-	if (sat_state != NULL && index > 0 && index < sat_state->num_clauses) // TODO: Should this be index <= num_clauses?
+	if (sat_state != NULL && index > 0 && index <= sat_state->num_clauses) // TODO: Should this be index <= num_clauses?
 		return &(sat_state->CNF[index]);
 
 	return NULL;	//Parameter error
@@ -557,7 +559,7 @@ SatState* sat_state_new(const char* file_name) {
 	satState->num_vars = num_vars;
 	satState->num_clauses = num_clauses;
 	satState->num_lits = 2 * num_vars;
-	satState->decision_level = 0;
+	satState->decision_level = 1;
 	satState->num_learned = 0;
 	satState->decisions = NULL;
 	satState->learnedClauses = (clauseList*) malloc(sizeof(clauseList));
@@ -808,8 +810,11 @@ void sat_state_free(SatState* sat_state) {
 //applies unit resolution to the cnf of sat state
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state) {
+	//TODO: LEARN CLAUSE
+
+
 	//Run a special unit resolution if no decision has been made
-	if (sat_state->decision_level == 0) // Shouldn't this be == 1?
+	if (sat_state->decision_level == 1) 
 		return initial_unit_resolution(sat_state);
 
 	//Create a litNode to traverse the decision's list of unit literals
