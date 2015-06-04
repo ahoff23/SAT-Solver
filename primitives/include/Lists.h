@@ -32,6 +32,11 @@ typedef struct litList {
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
 Lit* litList_pop(litList* list)
 {
+	// Check for empty list before popping
+	if(list->head == NULL) {
+		return NULL;
+	}
+	
 	Lit* head_lit;					//Stores the literal stored in the head of the list
 	litNode* temp_next;				//Temporarily stores the second node in the list
 
@@ -86,6 +91,11 @@ typedef struct decList {
 //@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
 Decision* decList_pop(decList* list)
 {
+	// Check for empty list before popping
+	if(list->head == NULL) {
+		return NULL;
+	}
+	
 	Decision* head_dec;		//Stores the decision at the head of the list
 	decNode* temp_next;				//Stores the second node in the list
 
@@ -141,6 +151,11 @@ typedef struct clauseList {
 //@return the decision pointed to by the former head of the list (i.e. the removed node's literal)
 Clause* clauseList_pop(clauseList* list)
 {
+	// Check for empty list before popping
+	if(list->head == NULL) {
+		return NULL;
+	}
+
 	Clause* head_clause;			//Stores the clause in the head of the list
 	clauseNode* temp_next;				//Stores the second node in the list
 

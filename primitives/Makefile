@@ -8,9 +8,9 @@ SRC = src/sat_api.c
 
 OBJS=$(SRC:.c=.o)
 
-HEADERS = sat_api.h
+HEADERS = sat_api.h Lists.h
 
-sat: $(OBJS)
+sat: $(OBJS) $(SRC)
 	$(AR) $(AR_FLAGS) $(LIB_FILE) $(OBJS)
 
 %.o: %.c $(HEADERS)

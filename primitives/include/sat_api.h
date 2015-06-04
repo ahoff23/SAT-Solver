@@ -42,7 +42,7 @@ typedef double c2dWmc;          //for (weighted) model count
 /******************************************************************************
 * Forward Declarations
 ******************************************************************************/
-struct literal;
+typedef struct literal Lit;
 
 /******************************************************************************
 * Basic structures
@@ -59,8 +59,8 @@ struct literal;
 typedef struct var {
 	int instantiated;				//1 if the variable has been instantiated, 0 otherwise
 
-	struct literal* pos_lit;		//The positive literal corresponding to this variable
-	struct literal* neg_lit;		//The negative literal corresponding to this variable
+	Lit* pos_lit;		//The positive literal corresponding to this variable
+	Lit* neg_lit;		//The negative literal corresponding to this variable
 	unsigned long num_mentioned;	//Number of clauses mentioning this literal
 
 	c2dSize index;					//Variable index (you can change the variable name as you wish)
@@ -81,10 +81,9 @@ typedef struct var {
 typedef struct literal {
 	c2dLiteral index;					//Literal index (you can change the variable name as you wish)
 	BOOLEAN truth_value;				//1 if the variable is true, 0 if it is false, -1 if it is not set
-	clauseList* learnedClauses;			//List of clauses containing this literal that were learned
 	Var* var;							//The variable corresponding to this literal	
 	clauseList* clauses;				//List of clauses containing this literal						***MAKE ARRAY***
-	clauseList* learnedClause;			//List of clauses containing this literal that were learned
+	clauseList* learnedClauses;			//List of clauses containing this literal that were learned
 } Lit;
 
 /******************************************************************************
@@ -301,6 +300,9 @@ void undo_all_resolution(SatState* sat_state);
 //this function is called after sat_decide_literal() or sat_assert_clause() returns clause.
 //it is used to decide whether the sat state is at the right decision level for adding clause.
 BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state);
+
+// Gets the last decision made in the SatState
+Decision* get_latest_decision(SatState* sat_state);
 
 /******************************************************************************
 * The functions below are already implemented for you and MUST STAY AS IS

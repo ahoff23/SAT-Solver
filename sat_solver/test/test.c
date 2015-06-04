@@ -1,50 +1,81 @@
- #define mu_assert(message, test) do { if (!(test)) return message; } while (0)
- #define mu_run_test(test) do { char *message = test(); tests_run++; \
-                                if (message) return message; } while (0)
+#define mu_assert(message, test) do { if (!(test)) return message; } while (0)
+#define mu_run_test(test, index) do { char *message = test(); tests_run++; if (message) return message; else printf("Passed test %d\n", index);} while (0)
 
 extern int test_run;
 
 #include <stdio.h>
 #include "sat_api.h"
 
- int tests_run = 0;
- /*
- int foo = 7;
- int bar = 5;
- 
- static char * test_foo() {
-     SatState* satState = sat_state_new("test/test.cnf");
-     printf("satState created %p\n", satState);
-     return 0;
- }
- 
- static char * test_bar() {
-     mu_assert("error, bar != 5", bar == 5);
-     return 0;
- }
- 
- static char * all_tests() {
-     mu_run_test(test_foo);
-     mu_run_test(test_foo);
-     mu_run_test(test_bar);
-     return 0;
- }
- */
- int main(int argc, char **argv) {
- 	SatState* satState = sat_state_new("test/test.cnf");
-     printf("satState created %p\n", satState);
- 	//char *result = test_foo();
- 	return 0;
- 	/*
-     char *result = all_tests();
-     if (result != 0) {
-         printf("%s\n", result);
-     }
-     else {
-         printf("ALL TESTS PASSED\n");
-     }
-     printf("Tests run: %d\n", tests_run);
- 
-     return result != 0;
-     */
- }
+typedef unsigned long c2dSize;  //for variables, clauses, and various things
+typedef signed long c2dLiteral; //for literals
+typedef double c2dWmc;          //for (weighted) model count
+typedef struct var Var;
+typedef struct literal Lit;
+typedef struct decision Decision;
+typedef struct clause Clause;
+typedef struct sat_state_t SatState;
+
+int tests_run = 0;
+
+static char * test_sat_state_var_count() {
+	SatState* s = sat_state_new("test/test.cnf");
+	mu_assert("num_vars != 11", sat_var_count(s) == 11);
+	sat_state_free(s);
+	return 0;
+}
+
+static char* test_var_index() {
+	SatState* s = sat_state_new("test/test.cnf");
+	for(c2dSize i = 1; i < sat_var_count(s); i++) {
+		mu_assert("var->index != index of var",sat_var_index(sat_index2var(i, s)) == i);
+	}
+	sat_state_free(s);
+	return 0;
+}
+
+static char* test_lit_index() {
+	SatState* s = sat_state_new("test/test.cnf");
+	for(c2dLiteral i = 1; i < sat_var_count(s); i++) {
+		mu_assert("lit->index != index of lit",sat_literal_index(sat_index2literal(i, s)) == i);
+		mu_assert("lit->index != index of lit",sat_literal_index(sat_index2literal(i*-1, s)) == i*-1);
+	}
+	sat_state_free(s);
+	return 0;
+}
+
+static char* test_sat_literal_var() {
+	SatState* s = sat_state_new("test/test.cnf");
+	for(int i = 1; i < sat_var_count(s); i++) {
+		Lit* litp = sat_index2literal(i, s);
+		Lit* litn = sat_index2literal(i*-1, s);
+		Var* var = sat_index2var(i, s);
+		mu_assert("", sat_pos_literal(var) == litp);
+		mu_assert("", sat_neg_literal(var) == litn);
+		mu_assert("", sat_literal_var(litp) == var);
+		mu_assert("", sat_literal_var(litn) == var);
+	}
+	sat_state_free(s);
+	return 0;
+}
+
+
+static char * all_tests() {
+	mu_run_test(test_sat_state_var_count, 0);
+	mu_run_test(test_var_index, 1);
+	mu_run_test(test_lit_index, 2);
+	mu_run_test(test_sat_literal_var, 3);
+	return 0;
+}
+
+int main(int argc, char **argv) {
+	char *result = all_tests();
+	if (result != 0) {
+		printf("%s\n", result);
+	} else {
+		printf("ALL TESTS PASSED\n");
+	}
+	printf("Tests run: %d\n", tests_run);
+
+	return result != 0;
+	
+}

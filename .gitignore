@@ -2,3 +2,5 @@
 *.a
 *~
 *vcxproj*
+sat
+unit_tests
