@@ -84,8 +84,11 @@ typedef struct literal {
 	Var* var;							//The variable corresponding to this literal	
 	clauseList* clauses;				//List of clauses containing this literal						***MAKE ARRAY***
 	clauseList* learnedClauses;			//List of clauses containing this literal that were learned
+
 	Clause* unit_on;					//Clause on which this literal becomes unit
 	litList* unit_children;				//List of literals that became unit once this literal was set
+	BOOLEAN in_contradiction_clause;	//True if this literal is in the contradcition clause
+	BOOLEAN DFS_ignore;					//True if the DFS for a uip should ignore this literal (i.e. inspecting whether or not this literal is the uip)
 } Lit;
 
 /******************************************************************************
@@ -102,8 +105,6 @@ typedef struct clause {
 	//c2dSize index;  clause index   (you can change the variable name as you wish)
 	//Lit** literals; literal array  (you can change the variable name as you wish
 	Lit** literals;			//Array of pointers to literals
-	//signed long* lits;	//Array of indices of literals **********CHANGE TO LIST**********
-
 	BOOLEAN subsumed;		//1 if the clause is subsumed at the current decision level, 0 otherwise
 	int free_lits;			//Number of literals free at the current decision level (not updated after clause is subsumed)
 	Lit* subsumed_on;		//Literal which caused the clause to become subsumed
@@ -138,7 +139,9 @@ typedef struct sat_state_t {
 
 typedef struct decision {
 	Lit* dec_lit;					//Literal on which the decision was made
-	dlitList* units;			//Unit literals found based on the decision made at this level
+	dlitList* units;				//Unit literals found based on the decision made at this level
+	dlitList* implication_graph;	//Literals to inspect in the implication graph
+	int contradiction_lits;			//Number of literals in the contradiction clause found at this decision level
 } Decision;
 
 /******************************************************************************
@@ -308,6 +311,15 @@ Decision* get_latest_decision(SatState* sat_state);
 
 // Print out current clauses
 void debug_print_clauses(SatState*);
+
+//Gets the uip
+Lit* sat_get_uip(SatState* sat_state);
+
+//Gets a queue of literals leading to the contradiciton clause in reverse order
+void find_uip_lits(Clause* contradiction, SatState* sat_state);
+
+//Get the assertion clause
+Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state);
 
 /******************************************************************************
 * The functions below are already implemented for you and MUST STAY AS IS

@@ -211,19 +211,28 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	new_dec->units->head = NULL;
 	new_dec->units->tail = NULL;
 	new_dec->dec_lit = lit;
+	new_dec->implication_graph = (dlitList*)malloc(sizeof(dlitList));
 	decList_push(sat_state->decisions,new_dec);
 
 	sat_state->decision_level++;	//Increment the decision level
 
-	//Set the literal
-	// TODO: Also should it have some Clause* return value that is used for something?
-	Clause* contradiction_clause = set_literal(lit, sat_state); 
-	printf("Set literal %ld. contradiction clause* = %p\n", lit->index, contradiction_clause);
-	//TODO: TENTATIVE
-	if (contradiction_clause != NULL)
+
+	//Set the literal and get a contradiction clause if one exists
+	Clause* contradiction = set_literal(lit, sat_state); 
+	
+	printf("Set literal %ld. contradiction clause* = %p\n", lit->index, contradiction);
+	
+	//Learn a clause if a contradiction has been found
+	if (contradiction != NULL)
 	{
-		//FIND ASSERTION CLAUSE
-		//RETURN LEARNED CLAUSE
+		//Get the assertion clause
+		Clause* assertion = get_assertion_clause(contradiction, sat_state);
+
+		//Add assertion clause to list of learned clauses
+		sat_state->num_learned++;
+		clauseList_push(sat_state->learnedClauses,assertion);
+
+		return assertion;
 	}
 
 	//Run unit resolution
@@ -834,7 +843,6 @@ void sat_state_free(SatState* sat_state) {
 //applies unit resolution to the cnf of sat state
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state) {
-	//TODO: LEARN CLAUSE
 	printf("\nstart unit resolution at decision_level = %d\n", sat_state->decision_level);
 	//Run a special unit resolution if no decision has been made
 	if (sat_state->decision_level == 1) {
@@ -922,12 +930,10 @@ void undo_all_resolution(SatState* sat_state)
 //this function is called after sat_decide_literal() or sat_assert_clause() returns clause.
 //it is used to decide whether the sat state is at the right decision level for adding clause.
 BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state) {
-
-	// ... TO DO ...
-
-	return 0; //dummy valued
+	if (clause->dec_level == sat_state->decision_level)
+		return 1;
+	return 0;
 }
-
 
 // Returns the latest decision made in the current SatState
 Decision* get_latest_decision(SatState* sat_state) {
@@ -951,6 +957,187 @@ void debug_print_clauses(SatState* sat_state) {
 		}
 		printf("\n");
 	}
+}
+
+//Gets the uip
+//@param contradiction: the contradiction clause found at the current level
+//@param sat_state: the SatState to search
+//@return the shared literal/uip of the implication graph
+Lit* sat_get_uip(Clause* contradiction, SatState* sat_state)
+{
+	//Get list of literals at this decision level on the path to the contradiction clause
+	find_uip_lits(contradiction, sat_state);
+
+	//If there is only one literal at  this decision level in the contradiction clause, then it is the contradiction literal
+	if (sat_state->decisions->head->node_dec->contradiction_lits == 1)
+		return sat_state->decisions->head->node_dec->implication_graph->head->node_lit;
+
+	//Node for traveling the implication graph literals in reverse order
+	dlitNode* trav = sat_state->decisions->head->node_dec->implication_graph->head;
+
+	//Counter to track which literal is being inspected (for skipping the literals in the contradiction clause)
+	int lit_counter = 0;
+
+	//For each literal in the implication graph until the decision literal is reached (reverse order)
+	while (trav->node_lit != sat_state->decisions->head->node_dec->dec_lit)
+	{
+		//No need to inspect the literals in the contradiction clause since there is more than 1 (cannot be the uip)
+		if (lit_counter >= sat_state->decisions->head->node_dec->contradiction_lits)
+		{
+			//Flag the literal to be ignored by DFS
+			trav->node_lit->DFS_ignore = 1;
+
+			//If the DFS cannot reach the contradiction clause, this is the uip
+			if (uip_DFS(sat_state) == 0)
+				return trav->node_lit;
+
+			//Remove the DFS flag
+			trav->node_lit->DFS_ignore = 0;
+		}
+
+		//Move to the next literal
+		trav = trav->next;
+		lit_counter++;
+	}
+
+	//The decision literal has been reached, it must be the implcation literal
+	return sat_state->decisions->head->node_dec->dec_lit;
+}
+
+//Gets a queue of literals leading to the contradiciton clause in reverse order
+//@param contradiction: the contradiction clause found at the current level
+//@param sat_state: the SatState to search
+void find_uip_lits(Clause* contradiction, SatState* sat_state)
+{
+	dlitNode* curr;			//Literal currently being inspected
+	sat_state->decisions->head->node_dec->contradiction_lits = 0;	//Reset the number of literals at this decision level in the contradiction clause
+
+	//Check each literal in the contradiction clause
+	for (int i = 0; i < contradiction->num_lits; i++)
+	{
+		//If the literal is at the current decision level, add it to the list of literals to inspect
+		if (sat_literal_var(contradiction->literals[i])->decision_level == sat_state->decision_level)
+		{
+			//Add the literal to the list of literals to inspect
+			push_back(sat_state->decisions->head->node_dec->implication_graph, contradiction->literals[i]);
+
+			//This literal is in the contradiction clause, mark it as such
+			contradiction->literals[i]->in_contradiction_clause = 1;
+
+			//Increment the number of literals at this decision level in the contradiction clause
+			sat_state->decisions->head->node_dec->contradiction_lits++;
+		}
+	}
+
+	//Get the first literal to inspect
+	curr = sat_state->decisions->head->node_dec->implication_graph->head;
+
+	//Repeat until all literals that lead to the contradiction clause at its decision level have been inspected
+	while (curr != NULL)
+	{
+		//Check every literal in the clause that led to the unit resolution of the currently inspected literal
+		for (int i = 0; i < curr->node_lit->unit_on->num_lits; i++)
+		{
+			//Add the literal to the list of literals to inspect if it is at this decision level
+			if (sat_literal_var(curr->node_lit->unit_on->literals[i])->decision_level == sat_state->decision_level)
+				push_back(sat_state->decisions->head->node_dec->implication_graph, curr->node_lit->unit_on->literals[i]);
+		}
+		curr = curr->next;
+	}
+}
+
+//Perform DFS from the decision literal to the contradiciton clause
+//@param sat_state: the SatState to search
+//@return false if the contradiction clause could not be reached
+BOOLEAN uip_DFS(SatState* sat_state)
+{
+	//Create a DFS stack and add the first decision literal to it
+	litList* stack_DFS = (litList*)malloc(sizeof(litList));
+	push(stack_DFS, sat_state->decisions->head->node_dec->dec_lit);
+
+	//Literal to check whether or not is in the contradiction clause
+	Lit* in_cc;
+
+	//Repeat until the stack is empty
+	while (stack_DFS->head != NULL)
+	{
+		//Check the next literal
+		in_cc = litList_pop(stack_DFS);
+
+		//If the literal is in the contradiction clause, the contradiciton clause can be reached
+		if (in_cc->in_contradiction_clause == 1)
+			return 1;
+	}
+
+	//Contradiction clause could not be reached (
+	return 0;
+}
+
+//Get the assertion clause
+//@param contradiction: the contradiction clause found at the current level
+//@param sat_state: the SatState to search
+//@return the assertion clause
+Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
+{
+	//Create the assertion clause
+	Clause* assertion = (Clause*)malloc(sizeof(Clause));
+
+	//Initialize the clause
+	assertion->subsumed = 0;		
+	assertion->subsumed_on = NULL;
+	assertion->index = sat_state->num_learned;
+
+	int dec_level;			//Decision level at which the clause was learned. -1 if never learned (i.e. in the original CNF)
+
+
+	//List to store literals in assertion clause (clause has an array of literals, so this is temporary storage until size is found)
+	litList* temp_assert_lits = (litList*)malloc(sizeof(litList));
+
+	//Number of literals in the assertion clause (for creating the array of literals in the assertion clause)
+	assertion->num_lits = 1;
+
+	/**NON-DECISION LEVEL LITERALS IN CONTRADICTION CLAUSE**/
+	//Add opposite of every non-decision literal in the contradiction clause to the assertion clause
+	for (int i = 0; i < contradiction->num_lits; i++)
+	{ 
+		//If the literal was not learned at this decision level add its opposite to the assertion clause
+		if (sat_literal_var(contradiction->literals[i])->decision_level != sat_state->decision_level)
+			litList_push(temp_assert_lits, opp_lit(contradiction->literals[i]));
+	}
+
+	/**UIP**/
+	//Get the uip
+	Lit* uip = sat_get_uip(contradiction, sat_state);
+
+	//Add opposite of uip to assertion clause
+	litList_push(temp_assert_lits,opp_lit(uip));
+
+	/**NON-DECISION LEVEL PARENTS OF UNIT CHILDREN OF UIP**/
+	//Node for traversing the list of unit children of uip
+	litNode* trav = uip->unit_children->head;
+
+	//Traverse every unit child of the uip
+	while (trav != NULL)
+	{
+		//Add opposite of non-decision level parents of uip's children to assertion clause
+		for (int i = 0; i < trav->node_lit->unit_on->num_lits; i++)
+		{
+			//If the literal was not learned at this decision level add its opposite to the assertion clause
+			if (sat_literal_var(trav->node_lit->unit_on->literals[i])->decision_level != sat_state->decision_level)
+				litList_push(temp_assert_lits, opp_lit(trav->node_lit->unit_on->literals[i]));
+		}
+		trav = trav->next;	//Move to the next unit child literal
+	}
+	
+	//Create the list of literals in the clause
+	assertion->literals = (Lit**)malloc(assertion->num_lits * sizeof(Lit *));
+	assertion->free_lits = assertion->num_lits;
+	 
+	//Place each literal into the list of literals in the clause
+	for (int i = 0; i < assertion->num_lits; i++)
+		assertion->literals[i] = litList_pop(temp_assert_lits);
+
+	free(temp_assert_lits);
 }
 
 /******************************************************************************
