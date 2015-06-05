@@ -308,6 +308,17 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
 			dlitList_push_back(get_latest_decision(sat_state)->units,unit_lit);
+			
+			//Set this literal's unit_on variable
+			unit_lit->unit_on = curr->node_clause;
+
+			//Loop through each literal in the clause
+			for (int i = 0; i < curr->node_clause->num_lits; i++)
+			{
+				//Add this unit to each of its parents' list of children
+				if (curr->node_clause->literals[i] != unit_lit)
+					litList_push(curr->node_clause->literals[i]->unit_children, unit_lit);
+			}
 		}
 
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
@@ -408,7 +419,7 @@ void undo_add_opposite(clauseList* clauses)
 
 //returns a clause structure for the corresponding index
 Clause* sat_index2clause(c2dSize index, const SatState* sat_state) {
-	if (sat_state != NULL && index > 0 && index <= sat_state->num_clauses) // TODO: Should this be index <= num_clauses?
+	if (sat_state != NULL && index > 0 && index <= sat_state->num_clauses) 
 		return &(sat_state->CNF[index]);
 
 	return NULL;	//Parameter error

@@ -59,8 +59,8 @@ typedef struct literal Lit;
 typedef struct var {
 	int instantiated;				//1 if the variable has been instantiated, 0 otherwise
 
-	Lit* pos_lit;		//The positive literal corresponding to this variable
-	Lit* neg_lit;		//The negative literal corresponding to this variable
+	Lit* pos_lit;					//The positive literal corresponding to this variable
+	Lit* neg_lit;					//The negative literal corresponding to this variable
 	unsigned long num_mentioned;	//Number of clauses mentioning this literal
 
 	c2dSize index;					//Variable index (you can change the variable name as you wish)
@@ -84,6 +84,8 @@ typedef struct literal {
 	Var* var;							//The variable corresponding to this literal	
 	clauseList* clauses;				//List of clauses containing this literal						***MAKE ARRAY***
 	clauseList* learnedClauses;			//List of clauses containing this literal that were learned
+	Clause* unit_on;					//Clause on which this literal becomes unit
+	litList* unit_children;				//List of literals that became unit once this literal was set
 } Lit;
 
 /******************************************************************************
