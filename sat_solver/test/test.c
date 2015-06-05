@@ -58,12 +58,97 @@ static char* test_sat_literal_var() {
 	return 0;
 }
 
+static char* test_decide_literal() {
+	SatState* s = sat_state_new("test/test.cnf");
+	// Decide literal 3
+	Lit* lit = sat_index2literal(3, s);
+	sat_decide_literal(lit, s);
+	mu_assert("Variable 3 not instantiated", sat_instantiated_var(sat_literal_var(lit)) == 1);
+	
+	mu_assert("Literal 3 was not implied.", sat_implied_literal(lit) == 1);
+	mu_assert("Literal -3 opposite was implied.", sat_implied_literal(opp_lit(lit)) == 0);
+	
+	// Check if right clauses are subsumed
+	Clause* clause;
+	for(c2dSize i = 1; i <= sat_clause_count(s) ; i++) {
+		clause = sat_index2clause(i, s);
+		if(i!=2 && i!= 4 && i!=13 && i!=14) {
+			mu_assert("Clause i subsumed", sat_subsumed_clause(clause) == 0);
+		} else {
+			mu_assert("Clause i not subsumed", sat_subsumed_clause(clause) == 1);
+		}
+	}
+	
+	// Next, decide literal 2 (should imply -1)
+	lit = sat_index2literal(2, s);
+	sat_decide_literal(lit, s);
+
+	// 2 should now be implied
+	mu_assert("Variable 2 not instantiated", sat_instantiated_var(sat_literal_var(lit)) == 1);
+	mu_assert("Literal 2 was not implied.", sat_implied_literal(lit) == 1);
+	mu_assert("Literal -2 was implied.", sat_implied_literal(opp_lit(lit)) == 0);
+	
+	// -1 should have been resolved when 2 was decided
+	lit = sat_index2literal(-1, s);
+	mu_assert("Variable 1 not instantiated", sat_instantiated_var(sat_literal_var(lit)) == 1);
+	mu_assert("Literal -1 was not implied.", sat_implied_literal(lit) == 1);
+	mu_assert("Literal 1 was implied.", sat_implied_literal(opp_lit(lit)) == 0);
+	
+	// Check if right clauses are subsumed
+	for(c2dSize i = 1; i <= sat_clause_count(s) ; i++) {
+		clause = sat_index2clause(i, s);
+		if(i!=2 && i!= 4 && i!=13 && i!=14 && i!=1 && i!=3 && i!=7 && i!=8) {
+			mu_assert("Clause i subsumed", sat_subsumed_clause(clause) == 0);
+		} else {
+			mu_assert("Clause i not subsumed", sat_subsumed_clause(clause) == 1);
+		}
+	} 
+	
+	sat_state_free(s);
+	return 0;
+}
+
+
+static char* test_undo_decide_literal() {
+	SatState* s = sat_state_new("test/test.cnf");
+	// Decide literal 3
+	Lit* lit = sat_index2literal(3, s);
+	sat_decide_literal(lit, s);
+	mu_assert("Variable 3 not instantiated", sat_instantiated_var(sat_literal_var(lit)) == 1);
+	
+	mu_assert("Literal 3 was not implied.", sat_implied_literal(lit) == 1);
+	mu_assert("Literal -3 opposite was implied.", sat_implied_literal(opp_lit(lit)) == 0);
+	
+	// Check if right clauses are subsumed
+	Clause* clause;
+	for(c2dSize i = 1; i <= sat_clause_count(s) ; i++) {
+		clause = sat_index2clause(i, s);
+		if(i!=2 && i!= 4 && i!=13 && i!=14) {
+			mu_assert("Clause i subsumed", sat_subsumed_clause(clause) == 0);
+		} else {
+			mu_assert("Clause i not subsumed", sat_subsumed_clause(clause) == 1);
+		}
+	}
+	debug_print_clauses(s);
+	// Next, decide literal 2 (should imply -1)
+	lit = sat_index2literal(2, s);
+	sat_decide_literal(lit, s);
+	debug_print_clauses(s);
+	// Undo the decision of literal 2
+	printf("about to undo decide literal\n");
+	sat_undo_decide_literal(s);
+	debug_print_clauses(s);
+	sat_state_free(s);
+	return 0;
+}
 
 static char * all_tests() {
 	mu_run_test(test_sat_state_var_count, 0);
 	mu_run_test(test_var_index, 1);
 	mu_run_test(test_lit_index, 2);
 	mu_run_test(test_sat_literal_var, 3);
+	mu_run_test(test_decide_literal, 4);
+	mu_run_test(test_undo_decide_literal, 5);
 	return 0;
 }
 

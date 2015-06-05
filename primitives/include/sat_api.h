@@ -304,6 +304,9 @@ BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state);
 // Gets the last decision made in the SatState
 Decision* get_latest_decision(SatState* sat_state);
 
+// Print out current clauses
+void debug_print_clauses(SatState*);
+
 /******************************************************************************
 * The functions below are already implemented for you and MUST STAY AS IS
 ******************************************************************************/

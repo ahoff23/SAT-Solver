@@ -20,6 +20,7 @@ typedef struct var Var;
 typedef struct literal Lit;
 typedef struct clause Clause;
 typedef struct sat_state_t SatState;
+typedef struct decision Decision;
 
 /******************************************************************************
 * function prototypes
@@ -53,6 +54,7 @@ BOOLEAN sat_implied_literal(const Lit* lit);
 c2dWmc sat_literal_weight(const Lit* lit);
 Clause* sat_decide_literal(Lit* lit, SatState* sat_state);
 void sat_undo_decide_literal(SatState* sat_state);
+Lit* opp_lit(const Lit* lit);
 
 /******************************************************************************
 * Clauses
@@ -79,6 +81,8 @@ void sat_state_free(SatState* sat_state);
 BOOLEAN sat_unit_resolution(SatState* sat_state);
 void sat_undo_unit_resolution(SatState* sat_state);
 BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state);
+Decision* get_latest_decision(SatState* sat_state);
+void debug_print_clauses(SatState*);
 
 #endif //SATAPI_H_
 

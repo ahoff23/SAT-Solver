@@ -244,9 +244,13 @@ void dlitList_push_back(dlitList* list, Lit* new_lit)
 	//Create a node for the new literal
 	new_node = (dlitNode*)malloc(sizeof(dlitNode));
 	new_node->node_lit = new_lit;
-
+	new_node->next = NULL;
+	
 	if (list->head == NULL)
+	{
 		list->head = list->tail = new_node;
+		new_node->prev = NULL;
+	}
 	else
 	{
 		//Set the new node's successor to the head of the list
