@@ -315,6 +315,17 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 			unit_lit = get_unit_lit(curr->node_clause);
 			printf("found unit lit %ld\n", unit_lit->index);
 			dlitList_push_back(get_latest_decision(sat_state)->units,unit_lit);
+			
+			//Set this literal's unit_on variable
+			unit_lit->unit_on = curr->node_clause;
+
+			//Loop through each literal in the clause
+			for (int i = 0; i < curr->node_clause->num_lits; i++)
+			{
+				//Add this unit to each of its parents' list of children
+				if (curr->node_clause->literals[i] != unit_lit)
+					litList_push(curr->node_clause->literals[i]->unit_children, unit_lit);
+			}
 		}
 
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
