@@ -313,10 +313,13 @@ Decision* get_latest_decision(SatState* sat_state);
 void debug_print_clauses(SatState*);
 
 //Gets the uip
-Lit* sat_get_uip(SatState* sat_state);
+Lit* sat_get_uip(Clause* contradiction, SatState* sat_state);
 
 //Gets a queue of literals leading to the contradiciton clause in reverse order
 void find_uip_lits(Clause* contradiction, SatState* sat_state);
+
+//Perform DFS from the decision literal to the contradiciton clause
+BOOLEAN uip_DFS(SatState* sat_state);
 
 //Get the assertion clause
 Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state);

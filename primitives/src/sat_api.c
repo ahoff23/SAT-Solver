@@ -1019,7 +1019,7 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 		if (sat_literal_var(contradiction->literals[i])->decision_level == sat_state->decision_level)
 		{
 			//Add the literal to the list of literals to inspect
-			push_back(sat_state->decisions->head->node_dec->implication_graph, contradiction->literals[i]);
+			dlitList_push_back(sat_state->decisions->head->node_dec->implication_graph, contradiction->literals[i]);
 
 			//This literal is in the contradiction clause, mark it as such
 			contradiction->literals[i]->in_contradiction_clause = 1;
@@ -1040,7 +1040,7 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 		{
 			//Add the literal to the list of literals to inspect if it is at this decision level
 			if (sat_literal_var(curr->node_lit->unit_on->literals[i])->decision_level == sat_state->decision_level)
-				push_back(sat_state->decisions->head->node_dec->implication_graph, curr->node_lit->unit_on->literals[i]);
+				dlitList_push_back(sat_state->decisions->head->node_dec->implication_graph, curr->node_lit->unit_on->literals[i]);
 		}
 		curr = curr->next;
 	}
@@ -1053,7 +1053,7 @@ BOOLEAN uip_DFS(SatState* sat_state)
 {
 	//Create a DFS stack and add the first decision literal to it
 	litList* stack_DFS = (litList*)malloc(sizeof(litList));
-	push(stack_DFS, sat_state->decisions->head->node_dec->dec_lit);
+	litList_push(stack_DFS, sat_state->decisions->head->node_dec->dec_lit);
 
 	//Literal to check whether or not is in the contradiction clause
 	Lit* in_cc;
@@ -1086,9 +1086,6 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	assertion->subsumed = 0;		
 	assertion->subsumed_on = NULL;
 	assertion->index = sat_state->num_learned;
-
-	int dec_level;			//Decision level at which the clause was learned. -1 if never learned (i.e. in the original CNF)
-
 
 	//List to store literals in assertion clause (clause has an array of literals, so this is temporary storage until size is found)
 	litList* temp_assert_lits = (litList*)malloc(sizeof(litList));
@@ -1138,6 +1135,8 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 		assertion->literals[i] = litList_pop(temp_assert_lits);
 
 	free(temp_assert_lits);
+
+	return assertion;
 }
 
 /******************************************************************************

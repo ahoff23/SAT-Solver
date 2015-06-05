@@ -83,8 +83,9 @@ void sat_undo_unit_resolution(SatState* sat_state);
 BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state);
 Decision* get_latest_decision(SatState* sat_state);
 void debug_print_clauses(SatState*);
-Lit* sat_get_uip(SatState* sat_state);
+Lit* sat_get_uip(Clause* contradiction, SatState* sat_state);
 void find_uip_lits(Clause* contradiction, SatState* sat_state);
+BOOLEAN uip_DFS(SatState* sat_state);
 Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state);
 
 #endif //SATAPI_H_
