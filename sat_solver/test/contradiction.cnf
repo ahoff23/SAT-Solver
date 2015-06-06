@@ -1,0 +1,9 @@
+c CNF that will result in a contradiction during DPLL+, thus looking for an assertion clause.
+p cnf 6 7
+1 2 0
+2 3 0
+-1 -4 5 0
+-1 4 6 0
+-1 -5 6 0
+-1 4 -6 0
+-1 -5 -6 0

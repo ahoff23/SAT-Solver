@@ -536,10 +536,10 @@ Lit* get_unit_lit(Clause* clause)
 	//Traverse each literal in the clause
 	for (int i = 0; i < clause->num_lits; i++)
 	{
-		printf("Found unit lit: clause %lu lit %ld has truth_value %d\n", clause->index, clause->literals[i]->index, clause->literals[i]->truth_value);
-		if (clause->literals[i]->truth_value == -1)
+		if (clause->literals[i]->truth_value == -1) {
+			printf("Found unit lit: clause %lu lit %ld\n", clause->index, clause->literals[i]->index);
 			return clause->literals[i];
-		
+		}
 	}
 	return NULL;	//All literals are instantiated (ERROR)
 }
@@ -648,6 +648,7 @@ SatState* sat_state_new(const char* file_name) {
 		litp->learnedClauses->head = NULL;
 		litp->unit_children = (litList*) malloc(sizeof(litList));
 		litp->unit_children->head = NULL;
+		litp->unit_on = NULL;
 		satState->lits[i] = litp; // add to satState
 
 		// Initialize negative literal
@@ -660,6 +661,7 @@ SatState* sat_state_new(const char* file_name) {
 		litn->learnedClauses->head = NULL;
 		litn->unit_children = (litList*) malloc(sizeof(litList));
 		litn->unit_children->head = NULL;
+		litn->unit_on = NULL;
 		satState->lits[i * -1] = litn; // add to satState
 	}
 
@@ -1100,41 +1102,57 @@ Lit* sat_get_uip(Clause* contradiction, SatState* sat_state)
 //@param sat_state: the SatState to search
 void find_uip_lits(Clause* contradiction, SatState* sat_state)
 {
+	debug_print_clauses(sat_state);
 	dlitNode* curr;			//Literal currently being inspected
-	sat_state->decisions->head->node_dec->contradiction_lits = 0;	//Reset the number of literals at this decision level in the contradiction clause
+	Decision* decision = get_latest_decision(sat_state);	// Latest decision made
+	decision->contradiction_lits = 0;	//Reset the number of literals at this decision level in the contradiction clause
 
 	//Check each literal in the contradiction clause
 	for (int i = 0; i < contradiction->num_lits; i++)
 	{
+		Lit* lit = contradiction->literals[i];
+		
 		//If the literal is at the current decision level, add it to the list of literals to inspect
-		if (sat_literal_var(contradiction->literals[i])->decision_level == sat_state->decision_level)
+		if (sat_literal_var(lit)->decision_level == sat_state->decision_level)
 		{
+			printf("pushing opp_lits in contradiction clause to implication graph: %ld\n", opp_lit(lit)->index);
 			//Add the literal to the list of literals to inspect
-			dlitList_push_back(sat_state->decisions->head->node_dec->implication_graph, contradiction->literals[i]);
+			dlitList_push_back(decision->implication_graph, opp_lit(lit));
 
 			//This literal is in the contradiction clause, mark it as such
-			contradiction->literals[i]->in_contradiction_clause = 1;
+			lit->in_contradiction_clause = 1;
 
 			//Increment the number of literals at this decision level in the contradiction clause
-			sat_state->decisions->head->node_dec->contradiction_lits++;
+			decision->contradiction_lits++;
 		}
 	}
-
-	//Get the first literal to inspect
-	curr = sat_state->decisions->head->node_dec->implication_graph->head;
-
-	//Repeat until all literals that lead to the contradiction clause at its decision level have been inspected
+	
+	// Get the first literal to inspect
+	curr = decision->implication_graph->head;
+	
+	// Repeat until all literals that lead to the contradiction clause at its decision level have been inspected
 	while (curr != NULL)
 	{
-		//Check every literal in the clause that led to the unit resolution of the currently inspected literal
-		for (int i = 0; i < curr->node_lit->unit_on->num_lits; i++)
-		{
-			//Add the literal to the list of literals to inspect if it is at this decision level
-			if (sat_literal_var(curr->node_lit->unit_on->literals[i])->decision_level == sat_state->decision_level)
-				dlitList_push_back(sat_state->decisions->head->node_dec->implication_graph, curr->node_lit->unit_on->literals[i]);
+		Lit* lit = curr->node_lit;
+		printf("Try lit %ld\n", lit->index);
+		// If NOT a decided lit, but rather an implied lit
+		if(lit->unit_on != NULL) {
+			printf("lit %ld. lit->unit_on = %lu\n", lit->index, lit->unit_on->index);
+			// Check every literal in the clause that led to the unit resolution of the currently inspected literal
+			for (int i = 0; i < lit->unit_on->num_lits; i++)
+			{
+				Lit* unit_on_lit = lit->unit_on->literals[i];
+				// Add the literal to the list of literals to inspect if it is at this decision level
+				// TODO: Also need to filter out adding duplicate lits to implication graph
+				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit) {
+					printf("pushing opp_lit to implication graph: %ld\n", opp_lit(unit_on_lit)->index);
+					dlitList_push_back(decision->implication_graph, opp_lit(unit_on_lit));
+				}
+			}
 		}
 		curr = curr->next;
 	}
+	
 }
 
 //Perform DFS from the decision literal to the contradiciton clause
