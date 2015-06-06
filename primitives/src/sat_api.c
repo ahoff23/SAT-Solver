@@ -262,9 +262,15 @@ Clause* set_literal(Lit* lit, SatState* sat_state)
 
 	//Update all clauses containing the literal
 	subsume_clauses(lit, lit->clauses);
+	subsume_clauses(lit, lit->learnedClauses);
 
 	//Update all clauses containing the opposite of the literal				
-	return add_opposite(opp_lit(lit)->clauses, sat_state);
+	Clause* contradiction = add_opposite(opp_lit(lit)->clauses, sat_state);
+
+	if (contradiction != NULL)
+		return contradiction;
+
+	return add_opposite(opp_lit(lit)->learnedClauses, sat_state);
 }
 
 //Subsume all clauses containing a literal
@@ -387,9 +393,11 @@ void undo_set_literal(Lit* lit, SatState* sat_state)
 
 	//Reverse all clauses containing the literal
 	undo_subsume_clauses(lit, lit->clauses);
+	undo_subsume_clauses(lit, lit->learnedClauses);
 
 	//Reverse all clauses containing the opposite of the literal
 	undo_add_opposite(opp_lit(lit)->clauses);
+	undo_add_opposite(opp_lit(lit)->learnedClauses);
 }
 
 //Undo any subsumptions that occurred due to a decision or unit resolution
@@ -428,6 +436,7 @@ void undo_add_opposite(clauseList* clauses)
 	if (curr == NULL)
 		return;
 
+	//Loop through original clauses
 	do {
 		//If the clause is subsumed, do not make any changes to it
 		if (curr->node_clause->subsumed == 1)
@@ -876,7 +885,6 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 }
 
 //Check all of the initial clauses in the CNF are unit, and perform unit resolution if they are
-//DOES NOT CHECK LEARNED CLAUSES
 //@param sat_state: the SatState to investigate
 //@return 0 if a contradiction is found, 1 otherwise
 BOOLEAN initial_unit_resolution(SatState* sat_state)
@@ -891,6 +899,23 @@ BOOLEAN initial_unit_resolution(SatState* sat_state)
 			if (set_literal(get_unit_lit(&sat_state->CNF[i]), sat_state) != NULL)
 				return 0;
 		}
+	}
+
+	//Node for traversing learned clauses
+	clauseNode* trav = sat_state->learnedClauses->head;
+
+	//Loop through all learned clauses
+	while (trav != NULL)
+	{
+		//If the clause has one free literal, perform unit resolution
+		if (trav->node_clause->free_lits == 1)
+		{
+			//Check if a contradiction is found when setting the unit literal
+			if (set_literal(get_unit_lit(trav->node_clause), sat_state) != NULL)
+				return 0;
+
+		}
+		trav = trav->next;
 	}
 	return 1;
 }
@@ -917,7 +942,6 @@ void sat_undo_unit_resolution(SatState* sat_state) {
 }
 
 //Undoes resolution at decision level 0 (i.e. before a decision is made)
-//DOES NOT CHECK LEARNED CLAUSES
 //@param sat_state: the SatState to undo resolution on
 void undo_all_resolution(SatState* sat_state)
 {
@@ -927,6 +951,18 @@ void undo_all_resolution(SatState* sat_state)
 		//If the clause contains 1 literal, undo the setting of that literal
 		if (sat_state->CNF[i].num_lits == 1)
 			undo_set_literal(sat_state->CNF[i].literals[0], sat_state);
+	}
+
+	//Node for traversing learned clauses
+	clauseNode* trav = sat_state->learnedClauses->head;
+
+	//Loop through all learned clauses
+	while (trav != NULL)
+	{
+		//If the clause contains 1 literal, undo the setting of that literal
+		if (trav->node_clause->num_lits == 1)
+			undo_set_literal(trav->node_clause->literals[0], sat_state);
+		trav = trav->next;
 	}
 }
 
