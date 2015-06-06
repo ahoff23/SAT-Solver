@@ -80,6 +80,8 @@ SatState* sat_state_new(const char* file_name);
 void sat_state_free(SatState* sat_state);
 BOOLEAN sat_unit_resolution(SatState* sat_state);
 void sat_undo_unit_resolution(SatState* sat_state);
+void undo_all_resolution(SatState* sat_state);
+void free_decision(Decision* undo_dec);
 BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state);
 Decision* get_latest_decision(SatState* sat_state);
 void debug_print_clauses(SatState*);

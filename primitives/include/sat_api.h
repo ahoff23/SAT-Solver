@@ -84,7 +84,6 @@ typedef struct literal {
 	Var* var;							//The variable corresponding to this literal	
 	clauseList* clauses;				//List of clauses containing this literal						***MAKE ARRAY***
 	clauseList* learnedClauses;			//List of clauses containing this literal that were learned
-
 	Clause* unit_on;					//Clause on which this literal becomes unit
 	litList* unit_children;				//List of literals that became unit once this literal was set
 	BOOLEAN in_contradiction_clause;	//True if this literal is in the contradcition clause
@@ -298,6 +297,9 @@ void sat_undo_unit_resolution(SatState* sat_state);
 
 //Undoes resolution at decision level 0 (i.e. before a decision is made)
 void undo_all_resolution(SatState* sat_state);
+
+//Free the decision and all its underlying pointers
+void free_decision(Decision* undo_dec);
 
 //returns 1 if the decision level of the sat state equals to the assertion level of clause,
 //0 otherwise

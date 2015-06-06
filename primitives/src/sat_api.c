@@ -355,8 +355,14 @@ void sat_undo_decide_literal(SatState* sat_state) {
 	sat_undo_unit_resolution(sat_state);
 	
 	printf("undoing set literal decision literal\n");
+	//Get decision to undecide
+	Decision* undo_dec = decList_pop(sat_state->decisions);
+
 	//Undo the decision of the literal and remove the decision from the list of decisions
-	undo_set_literal(decList_pop(sat_state->decisions)->dec_lit, sat_state);
+	undo_set_literal(undo_dec->dec_lit, sat_state);
+
+	//Free the decision and all its underlying pointers
+	free_decision(undo_dec);
 
 	//Decrement the decision level
 	sat_state->decision_level--;
@@ -923,6 +929,33 @@ void undo_all_resolution(SatState* sat_state)
 			undo_set_literal(sat_state->CNF[i].literals[0], sat_state);
 	}
 }
+
+//Free the decision and all its underlying pointers
+//@param undo_dec: decision to free
+void free_decision(Decision* undo_dec)
+{
+	//Literal that stores which unit literal is currently being inspected
+	Lit* free_lit;
+
+	//Free the units list and all literal information in each literal that became unit based on this decision
+	while (undo_dec->units->head != NULL)
+	{
+		free_lit = dlitList_pop(undo_dec->units);
+		free_lit->unit_on = NULL;
+		free_lit->in_contradiction_clause = 0;
+
+		while (free_lit->unit_children != NULL)
+			litList_pop(free_lit->unit_children);
+	}
+
+	//Free the implication graph list
+	while (undo_dec->implication_graph->head != NULL)
+		dlitList_pop(undo_dec->implication_graph);
+
+	//Free the decision itself
+	free(undo_dec);
+}
+
 
 //returns 1 if the decision level of the sat state equals to the assertion level of clause,
 //0 otherwise
