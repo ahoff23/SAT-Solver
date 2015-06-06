@@ -108,18 +108,37 @@ static char* test_decide_literal() {
 	return 0;
 }
 
+static char* test_sat_var_occurences() {
+	SatState* s = sat_state_new("test/test.cnf");
+	mu_assert("Incorrect num_occurences of var 1", sat_var_occurences(sat_index2var(1, s)) == 3);
+	mu_assert("Incorrect num_occurences of var 2", sat_var_occurences(sat_index2var(2, s)) == 5);
+	mu_assert("Incorrect num_occurences of var 3", sat_var_occurences(sat_index2var(3, s)) == 7);
+	mu_assert("Incorrect num_occurences of var 4", sat_var_occurences(sat_index2var(4, s)) == 3);
+	mu_assert("Incorrect num_occurences of var 5", sat_var_occurences(sat_index2var(5, s)) == 5);
+	mu_assert("Incorrect num_occurences of var 6", sat_var_occurences(sat_index2var(6, s)) == 2);
+	mu_assert("Incorrect num_occurences of var 7", sat_var_occurences(sat_index2var(7, s)) == 4);
+	mu_assert("Incorrect num_occurences of var 8", sat_var_occurences(sat_index2var(8, s)) == 7);
+	mu_assert("Incorrect num_occurences of var 9", sat_var_occurences(sat_index2var(9, s)) == 2);
+	mu_assert("Incorrect num_occurences of var 10", sat_var_occurences(sat_index2var(10, s)) == 2);
+	mu_assert("Incorrect num_occurences of var 11", sat_var_occurences(sat_index2var(11, s)) == 2);
+	sat_state_free(s);
+	return 0;
+}
 
 static char* test_undo_decide_literal() {
 	SatState* s = sat_state_new("test/test.cnf");
 	// Decide literal 3
 	Lit* lit = sat_index2literal(3, s);
 	sat_decide_literal(lit, s);
-	mu_assert("Variable 3 not instantiated", sat_instantiated_var(sat_literal_var(lit)) == 1);
 	
-	mu_assert("Literal 3 was not implied.", sat_implied_literal(lit) == 1);
-	mu_assert("Literal -3 opposite was implied.", sat_implied_literal(opp_lit(lit)) == 0);
+	// Next, decide literal 2 (should imply -1)
+	lit = sat_index2literal(2, s);
+	sat_decide_literal(lit, s);
 	
-	// Check if right clauses are subsumed
+	// Undo the decision of literal 2 (thus the implied -1 too)
+	sat_undo_decide_literal(s);
+	
+	// Check that the right clauses are subsumed after undoing decision.
 	Clause* clause;
 	for(c2dSize i = 1; i <= sat_clause_count(s) ; i++) {
 		clause = sat_index2clause(i, s);
@@ -129,15 +148,7 @@ static char* test_undo_decide_literal() {
 			mu_assert("Clause i not subsumed", sat_subsumed_clause(clause) == 1);
 		}
 	}
-	debug_print_clauses(s);
-	// Next, decide literal 2 (should imply -1)
-	lit = sat_index2literal(2, s);
-	sat_decide_literal(lit, s);
-	debug_print_clauses(s);
-	// Undo the decision of literal 2
-	printf("about to undo decide literal\n");
-	sat_undo_decide_literal(s);
-	debug_print_clauses(s);
+	
 	sat_state_free(s);
 	return 0;
 }
@@ -149,6 +160,7 @@ static char * all_tests() {
 	mu_run_test(test_sat_literal_var, 3);
 	mu_run_test(test_decide_literal, 4);
 	mu_run_test(test_undo_decide_literal, 5);
+	mu_run_test(test_sat_var_occurences, 6);
 	return 0;
 }
 
