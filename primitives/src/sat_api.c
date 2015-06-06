@@ -321,14 +321,12 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 			continue;
 
 		//Decrement the number of free literals
-		printf("decrement free lits on clause %lu\n", curr->node_clause->index);
 		curr->node_clause->free_lits--;
 
 		//Check if the number of literals is 1 (i.e. perform unit resolution)
 		if (curr->node_clause->free_lits == 1)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
-			printf("found unit lit %ld\n", unit_lit->index);
 			dlitList_push_back(get_latest_decision(sat_state)->units,unit_lit);
 			
 			//Set this literal's unit_on variable
@@ -366,10 +364,10 @@ void sat_undo_decide_literal(SatState* sat_state) {
 
 	//Undo the decision of the literal and remove the decision from the list of decisions
 	undo_set_literal(undo_dec->dec_lit, sat_state);
-
+	printf("about to free decision\n");
 	//Free the decision and all its underlying pointers
 	free_decision(undo_dec);
-
+	printf("after freed decision\n");
 	//Decrement the decision level
 	sat_state->decision_level--;
 }
@@ -391,10 +389,11 @@ void undo_set_literal(Lit* lit, SatState* sat_state)
 	lit->truth_value = -1;
 	opp_lit(lit)->truth_value = -1;
 
+	printf("undo subsume clauses\n");
 	//Reverse all clauses containing the literal
 	undo_subsume_clauses(lit, lit->clauses);
 	undo_subsume_clauses(lit, lit->learnedClauses);
-
+	printf("undo add opposite\n");
 	//Reverse all clauses containing the opposite of the literal
 	undo_add_opposite(opp_lit(lit)->clauses);
 	undo_add_opposite(opp_lit(lit)->learnedClauses);
@@ -541,7 +540,7 @@ Lit* get_unit_lit(Clause* clause)
 	//Traverse each literal in the clause
 	for (int i = 0; i < clause->num_lits; i++)
 	{
-		printf("get_unit_lit: clause %lu lit %ld has truth_value %d\n", clause->index, clause->literals[i]->index, clause->literals[i]->truth_value);
+		printf("Found unit lit: clause %lu lit %ld has truth_value %d\n", clause->index, clause->literals[i]->index, clause->literals[i]->truth_value);
 		if (clause->literals[i]->truth_value == -1)
 			return clause->literals[i];
 		
@@ -649,6 +648,8 @@ SatState* sat_state_new(const char* file_name) {
 		litp->clauses->head = NULL;
 		litp->learnedClauses = (clauseList*) malloc(sizeof(clauseList));
 		litp->learnedClauses->head = NULL;
+		litp->unit_children = (litList*) malloc(sizeof(litList));
+		litp->unit_children->head = NULL;
 		satState->lits[i] = litp; // add to satState
 
 		// Initialize negative literal
@@ -659,6 +660,8 @@ SatState* sat_state_new(const char* file_name) {
 		litn->clauses->head = NULL;
 		litn->learnedClauses = (clauseList*) malloc(sizeof(clauseList));
 		litn->learnedClauses->head = NULL;
+		litn->unit_children = (litList*) malloc(sizeof(litList));
+		litn->unit_children->head = NULL;
 		satState->lits[i * -1] = litn; // add to satState
 	}
 
@@ -980,7 +983,7 @@ void free_decision(Decision* undo_dec)
 		free_lit->unit_on = NULL;
 		free_lit->in_contradiction_clause = 0;
 
-		while (free_lit->unit_children != NULL)
+		while (free_lit->unit_children->head != NULL)
 			litList_pop(free_lit->unit_children);
 	}
 
