@@ -133,6 +133,7 @@ typedef struct sat_state_t {
 	int decision_level;							//Current decision level
 	decList* decisions;							//List of the decisions made (head is the most recent decision)
 	c2dSize num_learned;						//Number of learned clauses
+	Clause* assertion_clause;					//Assertion clause found
 
 } SatState;
 
