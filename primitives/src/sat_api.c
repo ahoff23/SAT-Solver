@@ -980,7 +980,7 @@ void free_decision(Decision* undo_dec)
 		free_lit->unit_on = NULL;
 		free_lit->in_contradiction_clause = 0;
 
-		while (free_lit->unit_children != NULL)
+		while (free_lit->unit_children->head != NULL)
 			litList_pop(free_lit->unit_children);
 	}
 
