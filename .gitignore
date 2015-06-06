@@ -4,3 +4,5 @@
 *vcxproj*
 sat
 unit_tests
+*.exe
+*.stackdump
