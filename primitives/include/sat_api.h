@@ -218,7 +218,7 @@ void sat_undo_decide_literal(SatState* sat_state);
 Lit* opp_lit(const Lit* lit);
 
 //Remove literal (performed when the opposite literal is decided or asserted by unit resolution)
-Clause* add_opposite(clauseList* clauses, SatState* sat_state);
+Clause* add_opposite(clauseList* clauses, SatState* sat_state, Lit* lit);
 
 //Subsume all clauses containing a literal
 void subsume_clauses(Lit* lit, clauseList* clauses);

@@ -273,10 +273,10 @@ Clause* set_literal(Lit* lit, SatState* sat_state)
 
 	//Update all clauses containing the opposite of the literal
 	//printf("Start add_opposite on lit %ld\n", opp_lit(lit)->index);				
-	Clause* contradiction = add_opposite(opp_lit(lit)->clauses, sat_state);
+	Clause* contradiction = add_opposite(opp_lit(lit)->clauses, sat_state,lit);
 
 	//Update all learned clauses containing the opposite of the literal
-	Clause* contradiction2 = add_opposite(opp_lit(lit)->learnedClauses, sat_state);
+	Clause* contradiction2 = add_opposite(opp_lit(lit)->learnedClauses, sat_state,lit);
 		
 		printf("End setting literal. Contradiction = %p\n\n", contradiction);
 	if (contradiction != NULL)
@@ -312,8 +312,9 @@ void subsume_clauses(Lit* lit, clauseList* clauses)
 //Remove literal (performed when the opposite literal is decided or asserted by unit resolution)
 //@param clauses: the clauses which are being updated
 //@param sat_state: the SatState of the problem space
+//@param lit: The literal being set in the calling function
 //@return contradiction clause if found, otherwise return NULL
-Clause* add_opposite(clauseList* clauses, SatState* sat_state)
+Clause* add_opposite(clauseList* clauses, SatState* sat_state, Lit* lit)
 {
 	//Create a node to traverse the list
 	clauseNode* curr = clauses->head;
@@ -330,10 +331,8 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		if (curr->node_clause->subsumed == 1)
 			continue;
 
-		unit_lit = get_unit_lit(curr->node_clause);
-
 		//If the unit literal is already on the unit list
-		if (unit_lit->unit_on != NULL)
+		if (lit->unit_on != NULL)
 			continue;
 
 		//Decrement the number of free literals
@@ -357,6 +356,8 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		//Check if the number of literals is 1 (i.e. perform unit resolution)
 		if (curr->node_clause->free_lits == 1)
 		{
+			unit_lit = get_unit_lit(curr->node_clause);
+
 			printf("Discovered unit lit %ld in clause %lu. Pushing to decision->units\n", unit_lit->index, curr->node_clause->index);
 			dlitList_push_back(get_latest_decision(sat_state)->units,unit_lit);
 
@@ -627,13 +628,16 @@ Lit* get_unit_lit(Clause* clause)
 	} else{
 				printf("Unit clause was null, not supposed to be.\n");
 	}
-	
+
 	//Traverse each literal in the clause
 	for (int i = 0; i < clause->num_lits; i++)
 	{
 		if (clause->literals[i]->truth_value == -1)
 			return clause->literals[i];
+		else
+			printf("INDEX: %li", clause->literals[i]->index);
 	}
+
 	return NULL;	//All literals are instantiated (ERROR)
 }
 
