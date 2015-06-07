@@ -549,31 +549,27 @@ Clause* sat_assert_clause(Clause* clause, SatState* sat_state) {
 	
 	for(c2dSize i = 0; i < learnedClause->num_lits; i++) {
 		Lit* lit = learnedClause->literals[i];
-		if(sat_implied_literal(lit)) {
+		if(sat_implied_literal(opp_lit(lit))) {
+			learnedClause->free_lits--;
+			// Learning a new unit clause
 			if(learnedClause->free_lits ==1)
 			{
 				// Push onto units of decision
-				
-				//
-				
-				
 				Lit* unit_lit = get_unit_lit(learnedClause);
 				printf("Discovered unit lit in LEARNED CLAUSE. Lit %ld\n", unit_lit->index);
 				dlitList_push_back(get_latest_decision(sat_state)->units,unit_lit);
 
 				//Set this literal's unit_on variable
-				unit_lit->unit_on = curr->node_clause;
+				unit_lit->unit_on = learnedClause;
 				//Loop through each literal in the clause
-				for (int i = 0; i < curr->node_clause->num_lits; i++)
+				for (int i = 0; i < learnedClause->num_lits; i++)
 				{
 					//Add this unit to each of its parents' list of children
-					if (curr->node_clause->literals[i] != unit_lit)
-						litList_push(curr->node_clause->literals[i]->unit_children, unit_lit);
+					if (learnedClause->literals[i] != unit_lit)
+						litList_push(learnedClause->literals[i]->unit_children, unit_lit);
 				}
-			}
-			else
-			{
-				learnedClause->free_lits--;
+				
+				return special_unit_resolution(sat_state, lit);
 			}
 		}
 	}
@@ -981,17 +977,20 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 // SPECIAL case of unit resolution to apply after asserting a new learned clause.
 //applies unit resolution to the cnf of sat state
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
-BOOLEAN special_unit_resolution(SatState* sat_state, Lit* lit) {
+Clause* special_unit_resolution(SatState* sat_state, Lit* lit) {
 	//Clause for containing a contradiction if found
 	Clause* contradiction = NULL;
-	BOOLEAN foundLiteral = false;
+	BOOLEAN foundLiteral = 0;
 	
 	printf("RUNNING special resolution decision_level = %d\n", sat_state->decision_level);
 	
 	//Run a special unit resolution if no decision has been made
 	if (sat_state->decision_level == 1) {
 		printf("run initial unit resolution\n");
-		return initial_unit_resolution(sat_state);
+		if(initial_unit_resolution(sat_state))
+			return NULL;
+		else
+			return sat_state->assertion_clause;
 	}
 
 	//Create a litNode to traverse the decision's list of unit literals
@@ -1001,9 +1000,10 @@ BOOLEAN special_unit_resolution(SatState* sat_state, Lit* lit) {
 		//While not at the end of the literal list
 		while (trav != NULL)
 		{
+			printf("PENISSSS\n");
 			// If we have found our literal passed into the function
 			if(trav->node_lit == lit)
-				foundLiteral = true;
+				foundLiteral = 1;
 
 			// Might find more unit literals after...
 			if(!foundLiteral)
@@ -1029,12 +1029,12 @@ BOOLEAN special_unit_resolution(SatState* sat_state, Lit* lit) {
 				else
 					printf("ASSERTION CLAUSE WAS NULL!!!!");
 				
-				return 0;
+				return sat_state->assertion_clause;
 			}
 			trav = trav->next;
 		}
 	}
-	return 1;		//Resolution completed without returning a contradiction clause i.e. unit resolution succeeded
+	return NULL;		//Resolution completed without returning a contradiction clause i.e. unit resolution succeeded
 }
 
 
@@ -1052,11 +1052,18 @@ BOOLEAN initial_unit_resolution(SatState* sat_state)
 		if (sat_state->CNF[i].free_lits == 1)
 		{
 			//Check if a contradiction is found when setting the unit literal
-			if (set_literal(get_unit_lit(&sat_state->CNF[i]), sat_state) != NULL)
+			Clause* contradiction = set_literal(get_unit_lit(&sat_state->CNF[i]), sat_state);
+			if (contradiction != NULL)
+			{
+				dlitList_pop_tail(get_latest_decision(sat_state)->units);
+
+				//Get the assertion clause
+				sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
 				return 0;
+			}
 		}
 	}
-
+// sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
 	//Node for traversing learned clauses
 	clauseNode* trav = sat_state->learnedClauses->head;
 
@@ -1067,8 +1074,15 @@ BOOLEAN initial_unit_resolution(SatState* sat_state)
 		if (trav->node_clause->free_lits == 1)
 		{
 			//Check if a contradiction is found when setting the unit literal
-			if (set_literal(get_unit_lit(trav->node_clause), sat_state) != NULL)
+			Clause* contradiction = set_literal(get_unit_lit(trav->node_clause), sat_state);
+			if (contradiction != NULL)
+			{
+				dlitList_pop_tail(get_latest_decision(sat_state)->units);
+
+				//Get the assertion clause
+				sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
 				return 0;
+			}
 
 		}
 		trav = trav->next;

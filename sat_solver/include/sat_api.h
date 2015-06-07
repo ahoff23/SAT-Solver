@@ -79,6 +79,7 @@ void sat_unmark_clause(Clause* clause);
 SatState* sat_state_new(const char* file_name);
 void sat_state_free(SatState* sat_state);
 BOOLEAN sat_unit_resolution(SatState* sat_state);
+Clause* special_unit_resolution(SatState* sat_state, Lit* lit);
 void sat_undo_unit_resolution(SatState* sat_state);
 void undo_all_resolution(SatState* sat_state);
 void free_decision(Decision* undo_dec);

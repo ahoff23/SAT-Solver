@@ -284,6 +284,9 @@ void sat_state_free(SatState* sat_state);
 //returns 1 if unit resolution succeeds, 0 if it finds a contradiction
 BOOLEAN sat_unit_resolution(SatState* sat_state);
 
+// SPECIAL unit resolution for after asserting clauses
+Clause* special_unit_resolution(SatState* sat_state, Lit* lit);
+
 //Check all of the initial clauses in the CNF are unit, and perform unit resolution if they are
 BOOLEAN initial_unit_resolution(SatState* sat_state);
 
