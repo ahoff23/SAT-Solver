@@ -236,6 +236,36 @@ Lit* dlitList_pop(dlitList* list)
 	return head_lit;
 }
 
+//Pop the tail from the list
+//@return the literal pointed to by the former tail of the list (i.e. the removed node's literal)
+Lit* dlitList_pop_tail(dlitList* list)
+{
+	Lit* tail_lit;		//Stores the literal in the tail of the list
+	dlitNode* temp_prev;	//Stores the second node in the list
+
+	//If the list is empty, return NULL
+	if (list->tail == NULL)
+		return NULL;
+
+	//Get the literal pointed to by the tail of the list
+	tail_lit = list->tail->node_lit;
+
+	//Get the next node pointed to by the tail of the list
+	temp_prev = list->tail->prev;
+
+	//Free the memory allocated in the tail node
+	free(list->tail);
+
+	//Set the tail node to the second to last node in the list
+	list->tail = temp_prev;
+	
+	// Set tail's new node's next to null
+	list->tail->next = NULL;
+
+	//Return the literal pointed to by the former tail of the list
+	return tail_lit;
+}
+
 //This function should ONLY BE CALLED IF THE LIST HAS A HEAD AND A TAIL
 void dlitList_push_back(dlitList* list, Lit* new_lit)
 {
