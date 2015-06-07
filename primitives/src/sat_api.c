@@ -958,7 +958,7 @@ void sat_undo_unit_resolution(SatState* sat_state) {
 	while (trav != NULL)
 	{
 		//Undo the unit resolution on the current literal
-		undo_set_literal((Lit*)trav->node_lit, sat_state);
+		undo_set_literal(trav->node_lit, sat_state);
 		
 		//Go to the next unit to undo resolution on
 		trav = trav->prev;
@@ -1121,11 +1121,14 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 	
 	// Get the first literal to inspect
 	curr = decision->implication_graph->head;
+
+	//Literal for traversing the list
+	Lit* lit;
 	
 	// Repeat until all literals that lead to the contradiction clause at its decision level have been inspected
 	while (curr != NULL)
 	{
-		Lit* lit = curr->node_lit;
+		lit = curr->node_lit;
 		printf("Try lit %ld\n", lit->index);
 		// If NOT a decided lit, but rather an implied lit
 		if(lit != decision->dec_lit) {
@@ -1135,13 +1138,27 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 			{
 				Lit* unit_on_lit = lit->unit_on->literals[i];
 				// Add the literal to the list of literals to inspect if it is at this decision level
-				// TODO: Also need to filter out adding duplicate lits to implication graph
-				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit && lit->DFS_ignore!= 1) {
+
+				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit  &&
+					lit->DFS_ignore == 0) 
+				{
 					printf("pushing opp_lit to implication graph: %ld\n", opp_lit(unit_on_lit)->index);
 					dlitList_push_back(decision->implication_graph, opp_lit(unit_on_lit));
+
+					//Mark the literal as visited
+					lit->DFS_ignore = 1;
 				}
 			}
 		}
+		curr = curr->next;
+	}
+
+	//Unmark every literal
+	curr = decision->implication_graph->head;
+
+	while (curr != NULL)
+	{
+		curr->node_lit->DFS_ignore = 0;
 		curr = curr->next;
 	}
 	
@@ -1162,12 +1179,15 @@ BOOLEAN uip_DFS(SatState* sat_state)
 	// Node for traveling list of unit children
 	litNode* child_trav;
 
+	//Node for travelinglist of unit children
+	litNode* child_trav;
+
 	//Repeat until the stack is empty
 	while (stack_DFS->head != NULL)
 	{
 		//Check the next literal
 		in_cc = litList_pop(stack_DFS);
-
+		
 		//If the literal is in the contradiction clause, the contradiciton clause can be reached
 		if (in_cc->in_contradiction_clause == 1)
 			return 1;
@@ -1183,8 +1203,8 @@ BOOLEAN uip_DFS(SatState* sat_state)
 	}
 
 	free(stack_DFS);
-	
-	//Contradiction clause could not be reached (
+		
+	//Contradiction clause could not be reached
 	return 0;
 }
 
