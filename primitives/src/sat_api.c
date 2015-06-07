@@ -1121,11 +1121,14 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 	
 	// Get the first literal to inspect
 	curr = decision->implication_graph->head;
+
+	//Literal for traversing the list
+	Lit* lit;
 	
 	// Repeat until all literals that lead to the contradiction clause at its decision level have been inspected
 	while (curr != NULL)
 	{
-		Lit* lit = curr->node_lit;
+		lit = curr->node_lit;
 		printf("Try lit %ld\n", lit->index);
 		// If NOT a decided lit, but rather an implied lit
 		if(lit->unit_on != NULL) {
@@ -1135,13 +1138,26 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 			{
 				Lit* unit_on_lit = lit->unit_on->literals[i];
 				// Add the literal to the list of literals to inspect if it is at this decision level
-				// TODO: Also need to filter out adding duplicate lits to implication graph
-				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit) {
+				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit  &&
+					lit->DFS_ignore == 0) 
+				{
 					printf("pushing opp_lit to implication graph: %ld\n", opp_lit(unit_on_lit)->index);
 					dlitList_push_back(decision->implication_graph, opp_lit(unit_on_lit));
+
+					//Mark the literal as visited
+					lit->DFS_ignore = 1;
 				}
 			}
 		}
+		curr = curr->next;
+	}
+
+	//Unmark every literal
+	curr = decision->implication_graph->head;
+
+	while (curr != NULL)
+	{
+		curr->node_lit->DFS_ignore = 0;
 		curr = curr->next;
 	}
 	
