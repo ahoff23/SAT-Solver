@@ -232,6 +232,8 @@ Lit* dlitList_pop(dlitList* list)
 	//Set the head node to the second node in the list
 	list->head = temp_next;
 
+	//list->head->prev = NULL;
+	
 	//Return the literal pointed to by the former head of the list
 	return head_lit;
 }
@@ -260,7 +262,8 @@ Lit* dlitList_pop_tail(dlitList* list)
 	list->tail = temp_prev;
 	
 	// Set tail's new node's next to null
-	list->tail->next = NULL;
+	if(list->tail != NULL)
+		list->tail->next = NULL;
 
 	//Return the literal pointed to by the former tail of the list
 	return tail_lit;
