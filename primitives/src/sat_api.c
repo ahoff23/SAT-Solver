@@ -1179,9 +1179,6 @@ BOOLEAN uip_DFS(SatState* sat_state)
 	// Node for traveling list of unit children
 	litNode* child_trav;
 
-	//Node for travelinglist of unit children
-	litNode* child_trav;
-
 	//Repeat until the stack is empty
 	while (stack_DFS->head != NULL)
 	{
@@ -1234,7 +1231,10 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	{ 
 		//If the literal was not learned at this decision level add its opposite to the assertion clause
 		if (sat_literal_var(contradiction->literals[i])->decision_level != sat_state->decision_level)
+		{
 			litList_push(temp_assert_lits, opp_lit(contradiction->literals[i]));
+			assertion->num_lits++;
+		}
 	}
 
 	/**UIP**/
@@ -1254,9 +1254,15 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 		//Add opposite of non-decision level parents of uip's children to assertion clause
 		for (int i = 0; i < trav->node_lit->unit_on->num_lits; i++)
 		{
-			//If the literal was not learned at this decision level add its opposite to the assertion clause
-			if (sat_literal_var(trav->node_lit->unit_on->literals[i])->decision_level != sat_state->decision_level)
+			//If the literal was not learned at this decision level and it has not been added 
+			//to the assertion clause yet add its opposite to the assertion clause
+			if (sat_literal_var(trav->node_lit->unit_on->literals[i])->decision_level != sat_state->decision_level
+				&& trav->node_lit->unit_on->literals[i] == 0 && opp_lit(trav->node_lit->unit_on->literals[i])->in_contradiction_clause == 0)
+			{
 				litList_push(temp_assert_lits, opp_lit(trav->node_lit->unit_on->literals[i]));
+				trav->node_lit->unit_on->literals[i]->DFS_ignore = 1;
+				assertion->num_lits++;
+			}
 		}
 		trav = trav->next;	//Move to the next unit child literal
 	}
@@ -1267,7 +1273,12 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	 
 	//Place each literal into the list of literals in the clause
 	for (int i = 0; i < assertion->num_lits; i++)
+	{
 		assertion->literals[i] = litList_pop(temp_assert_lits);
+		
+		//Unmark the literals in the assertion clause
+		assertion->literals[i]->DFS_ignore = 0;
+	}
 
 	free(temp_assert_lits);
 
