@@ -313,6 +313,8 @@ Decision* get_latest_decision(SatState* sat_state);
 // Print out current clauses
 void debug_print_clauses(SatState*);
 
+//Print out learned literals
+void debug_print_learned_lits(SatState* sat_state);
 
 //Removes all unit literals found at this decision level after parameter literal
 void cleanUnitlits(SatState* sat_state, Lit* lit);
