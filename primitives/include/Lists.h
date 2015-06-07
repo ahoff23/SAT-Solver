@@ -213,7 +213,7 @@ typedef struct dlitList {
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
 Lit* dlitList_pop(dlitList* list)
 {
-	printf("popping from list->head=%p, list->tail=%p\n", &(list->head), &(list->tail));
+	//printf("popping from list->head=%p, list->tail=%p\n", list->head, list->tail);
 	Lit* head_lit;		//Stores the literal in the head of the list
 	dlitNode* temp_next;	//Stores the second node in the list
 
@@ -226,7 +226,8 @@ Lit* dlitList_pop(dlitList* list)
 
 	if( list->head == list->tail) {
 		free(list->head);
-		list->head = list->tail = NULL;
+		list->head = NULL;
+		list->tail = NULL;
 		return head_lit;
 	}
 
@@ -238,7 +239,12 @@ Lit* dlitList_pop(dlitList* list)
 
 	//Set the head node to the second node in the list
 	list->head = temp_next;
-
+	
+	// Gotta change the new head's prev node to NULL
+	if(list->head != NULL) {
+		list->head->prev = NULL;
+	}
+	
 	//list->head->prev = NULL; Breaks code
 	
 	//Return the literal pointed to by the former head of the list
@@ -249,6 +255,7 @@ Lit* dlitList_pop(dlitList* list)
 //@return the literal pointed to by the former tail of the list (i.e. the removed node's literal)
 Lit* dlitList_pop_tail(dlitList* list)
 {
+	//printf("popping from TAIL  list->head=%p, list->tail=%p\n", list->head, list->tail);
 	Lit* tail_lit;		//Stores the literal in the tail of the list
 	dlitNode* temp_prev;	//Stores the second node in the list
 
@@ -295,8 +302,8 @@ void dlitList_push_back(dlitList* list, Lit* new_lit)
 	
 	if (list->head == NULL)
 	{
-		printf("TAIL BETTER BE NULL: %p\n", list->tail);
-		list->head = list->tail = new_node;
+		list->head = new_node;
+		list->tail = new_node;
 		new_node->prev = NULL;
 	}
 	else
@@ -310,6 +317,7 @@ void dlitList_push_back(dlitList* list, Lit* new_lit)
 		//Set the head of the list to the new node
 		list->tail = new_node;
 	}
+	//printf("Pushed to list->head=%p, list->tail=%p\n", list->head, list->tail);
 }
 
 
