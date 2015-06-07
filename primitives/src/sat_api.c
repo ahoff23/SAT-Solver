@@ -339,6 +339,7 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
 		if (curr->node_clause->free_lits == 0)
 			return curr->node_clause;
+
 	} while ((curr = curr->next) != NULL);
 	
 	return NULL;
@@ -1114,6 +1115,9 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 			//This literal is in the contradiction clause, mark it as such
 			lit->in_contradiction_clause = 1;
 
+			//Flag it as a literal that has already been added to implication graph
+			opp_lit(lit)->DFS_ignore = 1;
+
 			//Increment the number of literals at this decision level in the contradiction clause
 			decision->contradiction_lits++;
 		}
@@ -1140,13 +1144,13 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 				// Add the literal to the list of literals to inspect if it is at this decision level
 
 				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit  &&
-					lit->DFS_ignore == 0) 
+					opp_lit(unit_on_lit)->DFS_ignore == 0) 
 				{
 					printf("pushing opp_lit to implication graph: %ld\n", opp_lit(unit_on_lit)->index);
 					dlitList_push_back(decision->implication_graph, opp_lit(unit_on_lit));
 
 					//Mark the literal as visited
-					lit->DFS_ignore = 1;
+					opp_lit(unit_on_lit)->DFS_ignore = 1;
 				}
 			}
 		}
@@ -1269,7 +1273,7 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	
 	//Create the list of literals in the clause
 	assertion->literals = (Lit**)malloc(assertion->num_lits * sizeof(Lit *));
-	assertion->free_lits = assertion->num_lits;
+	assertion->free_lits = 1;
 	
 	//Decision level of the assertion clause
 	assertion->dec_level = -1;
@@ -1285,7 +1289,6 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 		check_level = sat_literal_var(assertion->literals[i])->decision_level;
 		if (check_level > assertion->dec_level && check_level != sat_state->decision_level)
 			assertion->dec_level = check_level;
-
 
 		//Unmark the literals in the assertion clause
 		assertion->literals[i]->DFS_ignore = 0;
