@@ -950,7 +950,7 @@ void sat_undo_unit_resolution(SatState* sat_state) {
 	while (trav != NULL)
 	{
 		//Undo the unit resolution on the current literal
-		undo_set_literal((Lit*)trav->node_lit, sat_state);
+		undo_set_literal(trav->node_lit, sat_state);
 		
 		//Go to the next unit to undo resolution on
 		trav = trav->prev;
@@ -1060,29 +1060,21 @@ Lit* sat_get_uip(Clause* contradiction, SatState* sat_state)
 	//Node for traveling the implication graph literals in reverse order
 	dlitNode* trav = sat_state->decisions->head->node_dec->implication_graph->head;
 
-	//Counter to track which literal is being inspected (for skipping the literals in the contradiction clause)
-	int lit_counter = 0;
-
 	//For each literal in the implication graph until the decision literal is reached (reverse order)
 	while (trav->node_lit != sat_state->decisions->head->node_dec->dec_lit)
 	{
-		//No need to inspect the literals in the contradiction clause since there is more than 1 (cannot be the uip)
-		if (lit_counter >= sat_state->decisions->head->node_dec->contradiction_lits)
-		{
-			//Flag the literal to be ignored by DFS
-			trav->node_lit->DFS_ignore = 1;
+		//Flag the literal to be ignored by DFS
+		trav->node_lit->DFS_ignore = 1;
 
-			//If the DFS cannot reach the contradiction clause, this is the uip
-			if (uip_DFS(sat_state) == 0)
-				return trav->node_lit;
+		//If the DFS cannot reach the contradiction clause, this is the uip
+		if (uip_DFS(sat_state) == 0)
+			return trav->node_lit;
 
-			//Remove the DFS flag
-			trav->node_lit->DFS_ignore = 0;
-		}
+		//Remove the DFS flag
+		trav->node_lit->DFS_ignore = 0;
 
 		//Move to the next literal
 		trav = trav->next;
-		lit_counter++;
 	}
 
 	//The decision literal has been reached, it must be the implcation literal
@@ -1143,18 +1135,32 @@ BOOLEAN uip_DFS(SatState* sat_state)
 	//Literal to check whether or not is in the contradiction clause
 	Lit* in_cc;
 
+	//Node for travelinglist of unit children
+	litNode* child_trav;
+
 	//Repeat until the stack is empty
 	while (stack_DFS->head != NULL)
 	{
 		//Check the next literal
 		in_cc = litList_pop(stack_DFS);
-
+		
 		//If the literal is in the contradiction clause, the contradiciton clause can be reached
 		if (in_cc->in_contradiction_clause == 1)
 			return 1;
+
+		//Push all implication graph children of node EXCEPT the flagged literal
+		child_trav = in_cc->unit_children->head;
+
+		while (child_trav != NULL)
+		{
+			if (child_trav->node_lit->DFS_ignore == 0)
+				litList_push(stack_DFS, child_trav->node_lit);
+		}
 	}
 
-	//Contradiction clause could not be reached (
+	free(stack_DFS);
+
+	//Contradiction clause could not be reached
 	return 0;
 }
 
