@@ -1278,12 +1278,15 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	//Place each literal into the list of literals in the clause
 	for (int i = 0; i < assertion->num_lits; i++)
 	{
+		//Add the literal to the array
+		assertion->literals[i] = litList_pop(temp_assert_lits);
+
+		///Check for a max assertion level (less than the decision level)
 		check_level = sat_literal_var(assertion->literals[i])->decision_level;
 		if (check_level > assertion->dec_level && check_level != sat_state->decision_level)
 			assertion->dec_level = check_level;
 
-		assertion->literals[i] = litList_pop(temp_assert_lits);
-		
+
 		//Unmark the literals in the assertion clause
 		assertion->literals[i]->DFS_ignore = 0;
 	}
