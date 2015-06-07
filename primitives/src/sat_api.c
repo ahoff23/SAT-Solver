@@ -214,6 +214,8 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	new_dec->units->tail = NULL;
 	new_dec->dec_lit = lit;
 	new_dec->implication_graph = (dlitList*)malloc(sizeof(dlitList));
+	new_dec->implication_graph->head = NULL;
+	new_dec->implication_graph->tail = NULL;
 	decList_push(sat_state->decisions,new_dec);			//Push the decision to the list of decisions
 
 	sat_state->decision_level++;	//Increment the decision level
@@ -225,12 +227,17 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 	if (contradiction != NULL)
 	{
 		// Remove the contradictory unit literal
-		dlitList_pop_tail(new_dec->units);
-		
+		//dlitList_pop_tail(new_dec->units);
+
 		//Get the assertion clause
 		sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
-		if(sat_state->assertion_clause != NULL)
+		if(sat_state->assertion_clause != NULL) {
 			printf("SAT-State assertion level = %d\n", sat_state->assertion_clause->dec_level);
+			for(c2dSize i = 0; i < sat_state->assertion_clause->num_lits; i++) {
+				printf("%ld ", sat_state->assertion_clause->literals[i]->index);
+			}
+			printf("\n");
+		}
 		else
 			printf("DRAGON BALL Z!!!!");
 		return sat_state->assertion_clause;
@@ -247,7 +254,7 @@ Clause* sat_decide_literal(Lit* lit, SatState* sat_state) {
 //@return a contradicted clause if one is found via add_opposite, NULL if no contradiction is found
 Clause* set_literal(Lit* lit, SatState* sat_state)
 {
-	printf("Setting literal %ld\n", lit->index);
+	printf("\nSetting literal %ld\n", lit->index);
 	//Set variable to instantiated
 	Var* var = sat_literal_var(lit);
 	var->instantiated = 1;
@@ -260,18 +267,19 @@ Clause* set_literal(Lit* lit, SatState* sat_state)
 	opp_lit(lit)->truth_value = 0;
 
 	//Update all clauses containing the literal
+	//printf("Subsume clauses on lit %ld\n", lit->index);			
 	subsume_clauses(lit, lit->clauses);
 	subsume_clauses(lit, lit->learnedClauses);
 
 	//Update all clauses containing the opposite of the literal
-	printf("Start add_opposite on lit %ld\n", opp_lit(lit)->index);				
+	//printf("Start add_opposite on lit %ld\n", opp_lit(lit)->index);				
 	Clause* contradiction = add_opposite(opp_lit(lit)->clauses, sat_state);
 
 	//Update all learned clauses containing the opposite of the literal
 	if(contradiction == NULL)
 		contradiction = add_opposite(opp_lit(lit)->learnedClauses, sat_state);
 		
-	printf("Contradiction = %p\n", contradiction);
+	printf("End setting literal. Contradiction = %p\n\n", contradiction);
 	return contradiction;
 }
 
@@ -328,11 +336,12 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		if (curr->node_clause->free_lits == 1)
 		{
 			unit_lit = get_unit_lit(curr->node_clause);
-			printf("Discovered unit lit %ld in clause %lu\n", unit_lit->index, curr->node_clause->index);
+			printf("Discovered unit lit %ld in clause %lu. Pushing to decision->units\n", unit_lit->index, curr->node_clause->index);
 			dlitList_push_back(get_latest_decision(sat_state)->units,unit_lit);
 
 			//Set this literal's unit_on variable
 			unit_lit->unit_on = curr->node_clause;
+
 			//Loop through each literal in the clause
 			for (int i = 0; i < curr->node_clause->num_lits; i++)
 			{
@@ -345,11 +354,7 @@ Clause* add_opposite(clauseList* clauses, SatState* sat_state)
 		//Check if the number of literals is 0 (i.e. a contradiction was found)
 		if (curr->node_clause->free_lits == 0) {
 			return curr->node_clause;
-<<<<<<< HEAD
-
-=======
 		}
->>>>>>> b98e31198e75818bfcbccd4f23977e4e4b04a874
 	} while ((curr = curr->next) != NULL);
 	
 	return NULL;
@@ -371,7 +376,8 @@ void sat_undo_decide_literal(SatState* sat_state) {
 	Decision* undo_dec = decList_pop(sat_state->decisions);
 
 	//Undo the decision of the literal and remove the decision from the list of decisions
-	undo_set_literal(undo_dec->dec_lit, sat_state);
+	if(undo_dec->dec_lit != NULL)
+		undo_set_literal(undo_dec->dec_lit, sat_state);
 
 	//Free the decision and all its underlying pointers
 	free_decision(undo_dec);
@@ -561,6 +567,7 @@ Clause* sat_assert_clause(Clause* clause, SatState* sat_state) {
 
 				//Set this literal's unit_on variable
 				unit_lit->unit_on = learnedClause;
+
 				//Loop through each literal in the clause
 				for (int i = 0; i < learnedClause->num_lits; i++)
 				{
@@ -569,7 +576,7 @@ Clause* sat_assert_clause(Clause* clause, SatState* sat_state) {
 						litList_push(learnedClause->literals[i]->unit_children, unit_lit);
 				}
 				
-				return special_unit_resolution(sat_state, lit);
+				return special_unit_resolution(sat_state, unit_lit);
 			}
 		}
 	}
@@ -584,7 +591,7 @@ Clause* sat_assert_clause(Clause* clause, SatState* sat_state) {
 Lit* get_unit_lit(Clause* clause)
 {
 	if(clause != NULL) {
-		printf("Unit clause %lu is : ", clause->index);
+		printf("Unit clause %lu with free_lits = %d is : ", clause->index, clause->free_lits);
 		for(int i = 0; i < clause->num_lits; i++) {
 			printf("%ld ", clause->literals[i]->index);
 		}
@@ -665,6 +672,18 @@ SatState* sat_state_new(const char* file_name) {
 	satState->learnedClauses->head = NULL;
 	satState->decisions = (decList*) malloc(sizeof(decList));
 	satState->decisions->head = NULL;
+	
+	Decision* new_dec = (Decision*)malloc(sizeof(Decision));
+	new_dec->units = (dlitList*) malloc(sizeof(dlitList));
+	new_dec->units->head = NULL;
+	new_dec->units->tail = NULL;
+	new_dec->dec_lit = NULL;
+	new_dec->implication_graph = (dlitList*)malloc(sizeof(dlitList));
+	new_dec->implication_graph->head = NULL;
+	new_dec->implication_graph->tail = NULL;
+	
+	
+	decList_push(satState->decisions, new_dec);
 	satState->assertion_clause = NULL;
 
 	/*************************************************************/
@@ -939,6 +958,7 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 
 	//Create a litNode to traverse the decision's list of unit literals
 	Decision* decision = get_latest_decision(sat_state);
+
 	if(decision->units != NULL) {
 		dlitNode* trav = decision->units->head;
 		//While not at the end of the literal list
@@ -950,17 +970,45 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 			//Set the literal and return 0 if unit resolution returns a contradiction clause
 			if (contradiction != NULL)
 			{
-				printf("Found a contradiction clause:  %lu\n", contradiction->index);
+				printf("Unit resolution found a contradiction clause:  %lu\n", contradiction->index);
 				// Remove contradictory clause from decision units.
-				printf("decision->lit= %ld, decision->units->tail->index = %ld\n", decision->dec_lit->index, decision->units->tail->node_lit->index);
-				debug_print_clauses(sat_state);
-				dlitList_pop_tail(decision->units);
+
+				//debug_print_clauses(sat_state);
+				/*dlitList_pop_tail(decision->units);
+
+				BOOLEAN test = 0;
+				for (int i = 0; i < contradiction->num_lits; i++)
+				{
+					dlitNode* trav = decision->units->head;
+					while (trav != NULL)
+					{
+						if (trav->node_lit == contradiction->literals[i])
+							test = 1;
+						trav = trav->next;
+					}
+				}
+				if (test == 1)
+				{
+					for (int m = 0; m < 100000000; m++)
+						printf("***ERROR***\n");
+				}*/
+
+
+
+				//Remove all literals from list of units if they have not been set yet
+				cleanUnitlits(sat_state, trav->node_lit);
+
 
 				//Get the assertion clause
 				sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
 				
-				if(sat_state->assertion_clause != NULL)
-					printf("SAT-State ASSERTION level = %d\n", sat_state->assertion_clause->dec_level);
+				if(sat_state->assertion_clause != NULL) {
+					printf("SAT-State ASSERTION level = %d, num_lits = %lu\n", sat_state->assertion_clause->dec_level, sat_state->assertion_clause->num_lits);
+					for(c2dSize i = 0; i < sat_state->assertion_clause->num_lits; i++) {
+						printf("%ld ", sat_state->assertion_clause->literals[i]->index);
+					}
+					printf("\n");
+				}
 				else
 					printf("ASSERTION CLAUSE WAS NULL!!!!");
 				
@@ -971,8 +1019,6 @@ BOOLEAN sat_unit_resolution(SatState* sat_state) {
 	}
 	return 1;		//Resolution completed without returning a contradiction clause i.e. unit resolution succeeded
 }
-
-
 
 // SPECIAL case of unit resolution to apply after asserting a new learned clause.
 //applies unit resolution to the cnf of sat state
@@ -986,7 +1032,7 @@ Clause* special_unit_resolution(SatState* sat_state, Lit* lit) {
 	
 	//Run a special unit resolution if no decision has been made
 	if (sat_state->decision_level == 1) {
-		printf("run initial unit resolution\n");
+		printf("special run initial unit resolution\n");
 		if(initial_unit_resolution(sat_state))
 			return NULL;
 		else
@@ -1000,14 +1046,16 @@ Clause* special_unit_resolution(SatState* sat_state, Lit* lit) {
 		//While not at the end of the literal list
 		while (trav != NULL)
 		{
-			printf("PENISSSS\n");
+			printf("PENISSSS, trav index = %ld\n", trav->node_lit->index);
 			// If we have found our literal passed into the function
 			if(trav->node_lit == lit)
 				foundLiteral = 1;
 
 			// Might find more unit literals after...
-			if(!foundLiteral)
+			if(!foundLiteral) {
+				trav = trav->next;
 				continue;
+			}
 				
 			//Set the literal and get a contradiction clause if one exists
 			contradiction = set_literal(trav->node_lit, sat_state);
@@ -1015,17 +1063,26 @@ Clause* special_unit_resolution(SatState* sat_state, Lit* lit) {
 			//Set the literal and return 0 if unit resolution returns a contradiction clause
 			if (contradiction != NULL)
 			{
-				printf("Found a contradiction clause:  %lu\n", contradiction->index);
+				printf("Special unit resolution found a contradiction clause:  %lu\n", contradiction->index);
 				// Remove contradictory clause from decision units.
-				printf("decision->lit= %ld, decision->units->tail->index = %ld\n", decision->dec_lit->index, decision->units->tail->node_lit->index);
-				debug_print_clauses(sat_state);
-				dlitList_pop_tail(decision->units);
+
+				//debug_print_clauses(sat_state);
+				//dlitList_pop_tail(decision->units);
+
+
+				//Remove all literals from list of units if they have not been set yet
+				cleanUnitlits(sat_state, trav->node_lit);
 
 				//Get the assertion clause
 				sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
 				
-				if(sat_state->assertion_clause != NULL)
+				if(sat_state->assertion_clause != NULL) {
 					printf("SAT-State ASSERTION level = %d\n", sat_state->assertion_clause->dec_level);
+					for(c2dSize i = 0; i < sat_state->assertion_clause->num_lits; i++) {
+						printf("%ld ", sat_state->assertion_clause->literals[i]->index);
+					}
+					printf("\n");
+				}
 				else
 					printf("ASSERTION CLAUSE WAS NULL!!!!");
 				
@@ -1053,9 +1110,13 @@ BOOLEAN initial_unit_resolution(SatState* sat_state)
 		{
 			//Check if a contradiction is found when setting the unit literal
 			Clause* contradiction = set_literal(get_unit_lit(&sat_state->CNF[i]), sat_state);
+
+
 			if (contradiction != NULL)
 			{
-				dlitList_pop_tail(get_latest_decision(sat_state)->units);
+				//dlitList_pop_tail(get_latest_decision(sat_state)->units);
+				//Remove all literals from list of units if they have not been set yet
+				cleanUnitlits(sat_state, get_unit_lit(&sat_state->CNF[i]));
 
 				//Get the assertion clause
 				sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
@@ -1075,17 +1136,66 @@ BOOLEAN initial_unit_resolution(SatState* sat_state)
 		{
 			//Check if a contradiction is found when setting the unit literal
 			Clause* contradiction = set_literal(get_unit_lit(trav->node_clause), sat_state);
+
 			if (contradiction != NULL)
 			{
-				dlitList_pop_tail(get_latest_decision(sat_state)->units);
+				//dlitList_pop_tail(get_latest_decision(sat_state)->units);
+				//Remove all literals from list of units if they have not been set yet
+				cleanUnitlits(sat_state, get_unit_lit(trav->node_clause));
 
 				//Get the assertion clause
 				sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
 				return 0;
 			}
-
 		}
 		trav = trav->next;
+	}
+	
+	
+	//Clause for containing a contradiction if found
+	Clause* contradiction = NULL;
+
+	//Create a litNode to traverse the decision's list of unit literals
+	Decision* decision = get_latest_decision(sat_state);
+
+	if(decision->units != NULL) {
+		dlitNode* trav = decision->units->head;
+		//While not at the end of the literal list
+		while (trav != NULL)
+		{
+			if(trav->node_lit->var->instantiated == 0) {
+				//Set the literal and get a contradiction clause if one exists
+				contradiction = set_literal(trav->node_lit, sat_state);
+
+				//Set the literal and return 0 if unit resolution returns a contradiction clause
+				if (contradiction != NULL)
+				{
+					printf("Initial Unit resolution found a contradiction clause:  %lu\n", contradiction->index);
+					// Remove contradictory clause from decision units.
+
+					//debug_print_clauses(sat_state);
+					//dlitList_pop_tail(decision->units);
+					//Remove all literals from list of units if they have not been set yet
+					cleanUnitlits(sat_state, trav->node_lit);
+
+					//Get the assertion clause
+					sat_state->assertion_clause = get_assertion_clause(contradiction, sat_state);
+				
+					if(sat_state->assertion_clause != NULL) {
+						printf("SAT-State ASSERTION level = %d, num_lits = %lu\n", sat_state->assertion_clause->dec_level, sat_state->assertion_clause->num_lits);
+						for(c2dSize i = 0; i < sat_state->assertion_clause->num_lits; i++) {
+							printf("%ld ", sat_state->assertion_clause->literals[i]->index);
+						}
+						printf("\n");
+					}
+					else
+						printf("ASSERTION CLAUSE WAS NULL!!!!");
+				
+					return 0;
+				}
+			}	
+			trav = trav->next;
+		}
 	}
 	return 1;
 }
@@ -1118,7 +1228,7 @@ void sat_undo_unit_resolution(SatState* sat_state) {
 	}
 }
 
-//Undoes resolution at decision level 0 (i.e. before a decision is made)
+//Undoes resolution at decision level 1 (i.e. before a decision is made)
 //@param sat_state: the SatState to undo resolution on
 void undo_all_resolution(SatState* sat_state)
 {
@@ -1149,12 +1259,12 @@ void free_decision(Decision* undo_dec)
 {
 	//Literal that stores which unit literal is currently being inspected
 	Lit* free_lit;
-
 	//Free the units list and all literal information in each literal that became unit based on this decision
 	while (undo_dec->units->head != NULL)
 	{
 		free_lit = dlitList_pop(undo_dec->units);
 		free_lit->unit_on = NULL;
+
 		free_lit->in_contradiction_clause = 0;
 
 		while (free_lit->unit_children->head != NULL)
@@ -1220,6 +1330,15 @@ void debug_print_clauses(SatState* sat_state) {
 	}
 }
 
+//Removes all unit literals found at this decision level after parameter literal
+//@param sat_state: the SatState to search
+//@param lit: The literal after which all unit literals at this decision level are removed
+void cleanUnitlits(SatState* sat_state, Lit* lit)
+{
+	while (get_latest_decision(sat_state)->units->tail->node_lit != lit)
+		dlitList_pop_tail(get_latest_decision(sat_state)->units);
+}
+
 //Gets the uip
 //@param contradiction: the contradiction clause found at the current level
 //@param sat_state: the SatState to search
@@ -1266,6 +1385,19 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 	Decision* decision = get_latest_decision(sat_state);	// Latest decision made
 	decision->contradiction_lits = 0;	//Reset the number of literals at this decision level in the contradiction clause
 
+	for (int i = 0; i < contradiction->num_lits; i++)
+	{
+		if (contradiction->literals[i]->unit_on == NULL)
+			printf("Literal Index: %li\n", contradiction->literals[i]->index);
+	}
+
+
+
+
+
+
+
+
 	//Check each literal in the contradiction clause
 	for (int i = 0; i < contradiction->num_lits; i++)
 	{
@@ -1286,9 +1418,6 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 
 			//Increment the number of literals at this decision level in the contradiction clause
 			decision->contradiction_lits++;
-			
-			// Flag it as a literal that has already been added to implication graph
-			opp_lit(lit)->DFS_ignore = 1;
 		}
 	}
 	
@@ -1302,21 +1431,24 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 	while (curr != NULL)
 	{
 		lit = curr->node_lit;
+
 		// If NOT a decided lit, but rather an implied lit
 		if(lit != decision->dec_lit) {
-			printf("lit %ld. lit->unit_on = %lu\n", lit->index, lit->unit_on->index);
+
+			printf("INDEX %li\n", lit->index);
+
 			// Check every literal in the clause that led to the unit resolution of the currently inspected literal
 			for (int i = 0; i < lit->unit_on->num_lits; i++)
 			{
 				Lit* unit_on_lit = lit->unit_on->literals[i];
-				// Add the literal to the list of literals to inspect if it is at this decision level
 
+				// Add the literal to the list of literals to inspect if it is at this decision level
 				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit  &&
 					opp_lit(unit_on_lit)->DFS_ignore == 0) 
 				{
 					printf("pushing opp_lit to implication graph: %ld\n", opp_lit(unit_on_lit)->index);
 					dlitList_push_back(decision->implication_graph, opp_lit(unit_on_lit));
-
+					
 					//Mark the literal as visited
 					opp_lit(unit_on_lit)->DFS_ignore = 1;
 				}
@@ -1441,14 +1573,11 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	
 	//Create the list of literals in the clause
 	assertion->literals = (Lit**)malloc(assertion->num_lits * sizeof(Lit *));
-<<<<<<< HEAD
-	assertion->free_lits = 1;
-=======
-	assertion->free_lits = 2; //assertion->num_lits;
->>>>>>> b98e31198e75818bfcbccd4f23977e4e4b04a874
+	//assertion->free_lits = 1;
+	assertion->free_lits = assertion->num_lits; // 100% sure it not be 2
 	
 	//Decision level of the assertion clause
-	assertion->dec_level = -1;
+	assertion->dec_level = 1;
 	int check_level;
 	printf("BALLSACK1\n");
 	//Place each literal into the list of literals in the clause

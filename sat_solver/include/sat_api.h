@@ -86,6 +86,7 @@ void free_decision(Decision* undo_dec);
 BOOLEAN sat_at_assertion_level(const Clause* clause, const SatState* sat_state);
 Decision* get_latest_decision(SatState* sat_state);
 void debug_print_clauses(SatState*);
+void cleanUnitlits(SatState* sat_state, Lit* lit);
 Lit* sat_get_uip(Clause* contradiction, SatState* sat_state);
 void find_uip_lits(Clause* contradiction, SatState* sat_state);
 BOOLEAN uip_DFS(SatState* sat_state);
