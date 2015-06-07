@@ -213,6 +213,7 @@ typedef struct dlitList {
 //@return the literal pointed to by the former head of the list (i.e. the removed node's literal)
 Lit* dlitList_pop(dlitList* list)
 {
+	printf("popping from list->head=%p, list->tail=%p\n", &(list->head), &(list->tail));
 	Lit* head_lit;		//Stores the literal in the head of the list
 	dlitNode* temp_next;	//Stores the second node in the list
 
@@ -223,6 +224,12 @@ Lit* dlitList_pop(dlitList* list)
 	//Get the literal pointed to by the head of the list
 	head_lit = list->head->node_lit;
 
+	if( list->head == list->tail) {
+		free(list->head);
+		list->head = list->tail = NULL;
+		return head_lit;
+	}
+
 	//Get the next node pointed to by the head of the list
 	temp_next = list->head->next;
 
@@ -232,7 +239,7 @@ Lit* dlitList_pop(dlitList* list)
 	//Set the head node to the second node in the list
 	list->head = temp_next;
 
-	//list->head->prev = NULL;
+	//list->head->prev = NULL; Breaks code
 	
 	//Return the literal pointed to by the former head of the list
 	return head_lit;
@@ -252,6 +259,13 @@ Lit* dlitList_pop_tail(dlitList* list)
 	//Get the literal pointed to by the tail of the list
 	tail_lit = list->tail->node_lit;
 
+	// If just one node, handle accordingly
+	if( list->head == list->tail) {
+		free(list->head);
+		list->head = list->tail = NULL;
+		return tail_lit;
+	}
+	
 	//Get the next node pointed to by the tail of the list
 	temp_prev = list->tail->prev;
 
@@ -281,6 +295,7 @@ void dlitList_push_back(dlitList* list, Lit* new_lit)
 	
 	if (list->head == NULL)
 	{
+		printf("TAIL BETTER BE NULL: %p\n", list->tail);
 		list->head = list->tail = new_node;
 		new_node->prev = NULL;
 	}
