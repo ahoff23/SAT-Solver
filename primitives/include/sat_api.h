@@ -57,13 +57,11 @@ typedef struct literal Lit;
 ******************************************************************************/
 
 typedef struct var {
+	c2dSize index;					//Variable index (you can change the variable name as you wish)
 	int instantiated;				//1 if the variable has been instantiated, 0 otherwise
-
 	Lit* pos_lit;					//The positive literal corresponding to this variable
 	Lit* neg_lit;					//The negative literal corresponding to this variable
-	unsigned long num_mentioned;	//Number of clauses mentioning this literal
-
-	c2dSize index;					//Variable index (you can change the variable name as you wish)
+	unsigned long num_mentioned;	//Number of clauses mentioning this variable
 	int decision_level;				//Decision level at which the variable is instantiated
 
 	BOOLEAN mark; //THIS FIELD MUST STAY AS IS
@@ -101,15 +99,12 @@ typedef struct literal {
 ******************************************************************************/
 
 typedef struct clause {
-	//c2dSize index;  clause index   (you can change the variable name as you wish)
-	//Lit** literals; literal array  (you can change the variable name as you wish
-	Lit** literals;			//Array of pointers to literals
-	BOOLEAN subsumed;		//1 if the clause is subsumed at the current decision level, 0 otherwise
-	int free_lits;			//Number of literals free at the current decision level (not updated after clause is subsumed)
-	Lit* subsumed_on;		//Literal which caused the clause to become subsumed
 	c2dSize index;			//Index of the clause in the CNF
 	c2dSize num_lits;		//The number of literals in the clause
-
+	int free_lits;			//Number of literals free at the current decision level (not updated after clause is subsumed)
+	Lit** literals;			//Array of pointers to literals
+	BOOLEAN subsumed;		//1 if the clause is subsumed at the current decision level, 0 otherwise
+	Lit* subsumed_on;		//Literal which caused the clause to become subsumed
 	int dec_level;			//Decision level at which the clause was learned. -1 if never learned (i.e. in the original CNF)
 
 	BOOLEAN mark; //THIS FIELD MUST STAY AS IS
