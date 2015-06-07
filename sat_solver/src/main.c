@@ -35,11 +35,21 @@ Clause* sat_aux(SatState* sat_state) {
 	if (learned != NULL) { //there is a conflict
 		if (sat_at_assertion_level(learned, sat_state)) {
 			learned = sat_assert_clause(learned, sat_state);
-			if (learned == NULL) return sat_aux(sat_state); //try again
-			else return learned; //new clause learned, backtrack
+			if (learned == NULL) {
+				printf("HERE1\n");
+				return sat_aux(sat_state); //try again
+			}
+			else {
+				printf("HERE2\n");
+				return learned; //new clause learned, backtrack
+			}
 		}
-		else return learned; //backtrack (still conflict)
+		else {
+			printf("MAIN: Backtrack, not yet at assertion level \n");
+			return learned; //backtrack (still conflict)
+		}
 	}
+	printf("HERE4\n");
 	return NULL; //satisfiable
 }
 
