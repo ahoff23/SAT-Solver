@@ -1232,7 +1232,7 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 		//If the literal was not learned at this decision level add its opposite to the assertion clause
 		if (sat_literal_var(contradiction->literals[i])->decision_level != sat_state->decision_level)
 		{
-			litList_push(temp_assert_lits, opp_lit(contradiction->literals[i]));
+			litList_push(temp_assert_lits, contradiction->literals[i]);
 			assertion->num_lits++;
 		}
 	}
@@ -1270,10 +1270,18 @@ Clause* get_assertion_clause(Clause* contradiction, SatState* sat_state)
 	//Create the list of literals in the clause
 	assertion->literals = (Lit**)malloc(assertion->num_lits * sizeof(Lit *));
 	assertion->free_lits = assertion->num_lits;
-	 
+	
+	//Decision level of the assertion clause
+	assertion->dec_level = -1;
+	int check_level;
+
 	//Place each literal into the list of literals in the clause
 	for (int i = 0; i < assertion->num_lits; i++)
 	{
+		check_level = sat_literal_var(assertion->literals[i])->decision_level;
+		if (check_level > assertion->dec_level && check_level != sat_state->decision_level)
+			assertion->dec_level = check_level;
+
 		assertion->literals[i] = litList_pop(temp_assert_lits);
 		
 		//Unmark the literals in the assertion clause
