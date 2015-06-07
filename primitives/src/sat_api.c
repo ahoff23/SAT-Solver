@@ -1068,29 +1068,21 @@ Lit* sat_get_uip(Clause* contradiction, SatState* sat_state)
 	//Node for traveling the implication graph literals in reverse order
 	dlitNode* trav = sat_state->decisions->head->node_dec->implication_graph->head;
 
-	//Counter to track which literal is being inspected (for skipping the literals in the contradiction clause)
-	int lit_counter = 0;
-
 	//For each literal in the implication graph until the decision literal is reached (reverse order)
 	while (trav->node_lit != sat_state->decisions->head->node_dec->dec_lit)
 	{
-		//No need to inspect the literals in the contradiction clause since there is more than 1 (cannot be the uip)
-		if (lit_counter >= sat_state->decisions->head->node_dec->contradiction_lits)
-		{
-			//Flag the literal to be ignored by DFS
-			trav->node_lit->DFS_ignore = 1;
+		//Flag the literal to be ignored by DFS
+		trav->node_lit->DFS_ignore = 1;
 
-			//If the DFS cannot reach the contradiction clause, this is the uip
-			if (uip_DFS(sat_state) == 0)
-				return trav->node_lit;
+		//If the DFS cannot reach the contradiction clause, this is the uip
+		if (uip_DFS(sat_state) == 0)
+			return trav->node_lit;
 
-			//Remove the DFS flag
-			trav->node_lit->DFS_ignore = 0;
-		}
+		//Remove the DFS flag
+		trav->node_lit->DFS_ignore = 0;
 
 		//Move to the next literal
 		trav = trav->next;
-		lit_counter++;
 	}
 
 	//The decision literal has been reached, it must be the implcation literal
@@ -1136,7 +1128,7 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 		Lit* lit = curr->node_lit;
 		printf("Try lit %ld\n", lit->index);
 		// If NOT a decided lit, but rather an implied lit
-		if(lit->unit_on != NULL) {
+		if(lit != decision->dec_lit) {
 			printf("lit %ld. lit->unit_on = %lu\n", lit->index, lit->unit_on->index);
 			// Check every literal in the clause that led to the unit resolution of the currently inspected literal
 			for (int i = 0; i < lit->unit_on->num_lits; i++)
@@ -1144,7 +1136,7 @@ void find_uip_lits(Clause* contradiction, SatState* sat_state)
 				Lit* unit_on_lit = lit->unit_on->literals[i];
 				// Add the literal to the list of literals to inspect if it is at this decision level
 				// TODO: Also need to filter out adding duplicate lits to implication graph
-				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit) {
+				if (sat_literal_var(unit_on_lit)->decision_level == sat_state->decision_level && lit != unit_on_lit && lit->DFS_ignore!= 1) {
 					printf("pushing opp_lit to implication graph: %ld\n", opp_lit(unit_on_lit)->index);
 					dlitList_push_back(decision->implication_graph, opp_lit(unit_on_lit));
 				}
@@ -1166,6 +1158,9 @@ BOOLEAN uip_DFS(SatState* sat_state)
 
 	//Literal to check whether or not is in the contradiction clause
 	Lit* in_cc;
+	
+	// Node for traveling list of unit children
+	litNode* child_trav;
 
 	//Repeat until the stack is empty
 	while (stack_DFS->head != NULL)
@@ -1176,8 +1171,19 @@ BOOLEAN uip_DFS(SatState* sat_state)
 		//If the literal is in the contradiction clause, the contradiciton clause can be reached
 		if (in_cc->in_contradiction_clause == 1)
 			return 1;
+			
+		// Push all implication graph children of node EXCEPT the flagged literal
+		child_trav = in_cc->unit_children->head;
+		
+		while(child_trav != NULL) 
+		{
+			if(child_trav->node_lit->DFS_ignore == 0)
+				litList_push(stack_DFS, child_trav->node_lit);
+		}
 	}
 
+	free(stack_DFS);
+	
 	//Contradiction clause could not be reached (
 	return 0;
 }
