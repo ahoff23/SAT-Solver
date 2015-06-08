@@ -679,7 +679,6 @@ SatState* sat_state_new(const char* file_name) {
 			//fprintf(stderr, "Could not open file %s\n", file_name);
 		exit(1);
 	}
-
 	c2dSize num_vars = 0, num_clauses = 0;
 	char line[maxLength];
 
@@ -799,22 +798,21 @@ SatState* sat_state_new(const char* file_name) {
 		// Read in line if it is not a comment
 		do {
 			if (fgets(line, maxLength, file) == NULL) {
-						//fprintf(stderr, "Read error, or EOF reached before all %ld CNF's read.\n", num_clauses);
+				fprintf(stderr, "Read error, or EOF reached before all %ld CNF's read.\n", num_clauses);
 				exit(1);
 			}
 		} while (line[0] == 'c' || line[0] == '%' || line[0] == '0');
 		// line now contains our clause string
 		// Count number of literals in clause, so we can allocate the array to the appropriate size
-		int num_lits = 0, j = 0;
-		char* temp = line;
-		while (temp[j] != '\0') {
-			if (temp[j] == ' ') { // If we reach a space, increment num_lits
-				num_lits++;
-				while (temp[j + 1] == ' ') // go through all consecutive spaces, 
-					j++;
-			}
-			j++;
-		}
+		int num_lits = 0;
+		char temp[maxLength] = {0};
+		
+		strcpy(temp, line);
+		
+		strtok(temp, " \n");
+		
+		while(strtok(NULL, " \n") != NULL)
+			num_lits++;
 
 		// Create literal array for this clause, of size num_lits
 		clauses[i].literals = (Lit**)malloc(num_lits * sizeof(Lit *));
@@ -1377,7 +1375,7 @@ Decision* get_latest_decision(SatState* sat_state) {
 
 void debug_print_clauses(SatState* sat_state) {
 	/************* DEBUG PRINTOUTS ********************/
-	/*
+	
 	printf("Initial Clauses at decision level %d:\n", sat_state->decision_level);
 	for(c2dSize i = 1; i <= sat_state->num_clauses; i++) {
 		Clause* clause = sat_index2clause(i, sat_state);
@@ -1387,7 +1385,7 @@ void debug_print_clauses(SatState* sat_state) {
 		}
 		printf("\n");
 	}
-	*/
+	
 	printf("Learned clauses at decision level %d:\n", sat_state->decision_level);
 	clauseList* learnedClauses = sat_state->learnedClauses;
 	clauseNode* iter = learnedClauses->head;
