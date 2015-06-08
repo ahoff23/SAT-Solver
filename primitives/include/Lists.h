@@ -38,19 +38,19 @@ Lit* litList_pop(litList* list)
 	}
 	
 	Lit* head_lit;					//Stores the literal stored in the head of the list
-	litNode* temp_next;				//Temporarily stores the second node in the list
+	litNode* temp;				//Temporarily stores the second node in the list
 
 	//Get the literal pointed to by the head of the list
 	head_lit = list->head->node_lit;
 
 	//Get the next node pointed to by the head of the list
-	temp_next = list->head->next;
-
-	//Free the memory allocated in the head node
-	free(list->head);
+	temp = list->head;
 
 	//Set the head node to the second node in the list
-	list->head = temp_next;
+	list->head = list->head->next;
+
+	//Free the memory allocated in the head node
+	free(temp);
 
 	//Return the literal pointed to by the former head of the list
 	return head_lit;
@@ -214,7 +214,7 @@ typedef struct dlitList {
 Lit* dlitList_pop(dlitList* list)
 {
 	//printf("popping from list->head=%p, list->tail=%p\n", list->head, list->tail);
-	Lit* head_lit;		//Stores the literal in the head of the list
+	Lit* head_lit;			//Stores the literal in the head of the list
 	dlitNode* temp_next;	//Stores the second node in the list
 
 	//If the list is empty, return NULL

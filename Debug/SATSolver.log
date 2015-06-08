@@ -1,4 +1,4 @@
-﻿Build started 6/7/2015 8:14:08 AM.
+﻿Build started 6/7/2015 4:00:18 PM.
      1>Project "C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\SATSolver.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /I"C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\primitives\include" /ZI /nologo /W3 /WX- /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TC /analyze- /errorReport:prompt primitives\src\sat_api.c sat_solver\src\main.c
@@ -25,57 +25,56 @@
      1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\sat_solver\src\main.c(49): error C2065: 'learned' : undeclared identifier
      1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\sat_solver\src\main.c(49): warning C4047: 'return' : 'Clause *' differs in levels of indirection from 'int'
          sat_api.c
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(113): error C2275: 'clauseNode' : illegal use of this type as an expression
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(115): error C2275: 'clauseNode' : illegal use of this type as an expression
                  c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\include\lists.h(143) : see declaration of 'clauseNode'
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(113): error C2065: 'curr' : undeclared identifier
      1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(115): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(115): warning C4047: '==' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(125): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(125): error C2223: left of '->node_clause' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(125): warning C4033: 'sat_clause_of_var' must return a value
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(117): error C2065: 'curr' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(117): warning C4047: '==' : 'int' differs in levels of indirection from 'void *'
      1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(127): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(127): error C2223: left of '->next' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(130): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(130): warning C4047: '=' : 'int' differs in levels of indirection from 'clauseNode *'
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(127): error C2223: left of '->node_clause' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(127): warning C4033: 'sat_clause_of_var' must return a value
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(129): error C2065: 'curr' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(129): error C2223: left of '->next' must point to struct/union
      1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(132): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(132): warning C4047: '==' : 'int' differs in levels of indirection from 'void *'
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(139): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(139): error C2223: left of '->node_clause' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(139): warning C4033: 'sat_clause_of_var' must return a value
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(132): warning C4047: '=' : 'int' differs in levels of indirection from 'clauseNode *'
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(134): error C2065: 'curr' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(134): warning C4047: '==' : 'int' differs in levels of indirection from 'void *'
      1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(141): error C2065: 'curr' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(141): error C2223: left of '->next' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(346): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(537): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(571): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(594): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(603): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(702): warning C4018: '<=' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(859): warning C4018: '<=' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1080): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1201): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1311): error C2275: 'dlitNode' : illegal use of this type as an expression
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(141): error C2223: left of '->node_clause' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(141): warning C4033: 'sat_clause_of_var' must return a value
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(143): error C2065: 'curr' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(143): error C2223: left of '->next' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(382): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(573): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(615): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(638): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(647): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(746): warning C4018: '<=' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(903): warning C4018: '<=' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1149): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1278): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1421): error C2275: 'dlitNode' : illegal use of this type as an expression
                  c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\include\lists.h(204) : see declaration of 'dlitNode'
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1311): error C2065: 'trav' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1314): error C2065: 'trav' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1314): error C2223: left of '->node_lit' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1317): error C2065: 'trav' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1317): error C2223: left of '->node_lit' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1321): error C2065: 'trav' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1321): error C2223: left of '->node_lit' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1321): warning C4033: 'sat_get_uip' must return a value
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1324): error C2065: 'trav' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1324): error C2223: left of '->node_lit' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1327): error C2065: 'trav' : undeclared identifier
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1327): error C2223: left of '->next' must point to struct/union
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1344): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1381): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1395): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1488): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1513): warning C4018: '<' : signed/unsigned mismatch
-     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1538): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1421): error C2065: 'trav' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1424): error C2065: 'trav' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1424): error C2223: left of '->node_lit' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1427): error C2065: 'trav' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1427): error C2223: left of '->node_lit' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1431): error C2065: 'trav' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1431): error C2223: left of '->node_lit' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1431): warning C4033: 'sat_get_uip' must return a value
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1434): error C2065: 'trav' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1434): error C2223: left of '->node_lit' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1437): error C2065: 'trav' : undeclared identifier
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1437): error C2223: left of '->next' must point to struct/union
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1456): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1495): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1589): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1614): warning C4018: '<' : signed/unsigned mismatch
+     1>c:\users\ahoff_000\desktop\ucla\cs 264\satsolver\satsolver\primitives\src\sat_api.c(1639): warning C4018: '<' : signed/unsigned mismatch
          Generating Code...
      1>Done Building Project "C:\Users\ahoff_000\Desktop\UCLA\CS 264\SATSolver\SATSolver\SATSolver.vcxproj" (Build target(s)) -- FAILED.
 
 Build FAILED.
 
-Time Elapsed 00:00:01.87
+Time Elapsed 00:00:01.79

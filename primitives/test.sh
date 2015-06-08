@@ -6,5 +6,5 @@ make copy
 cd ../sat_solver
 make clean
 make
-./sat -c test/c6288.cnf
+./sat -c test/c1355.cnf
 sleep 5m
